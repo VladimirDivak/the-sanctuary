@@ -1,14 +1,16 @@
 ﻿using System.Collections;
 using UnityEngine;
-using UnityEngine.Events;
+
+//  данный класс представляет собой описанию логики поведения камеры игрока
+//  класс был создан в начале работы над проектом и с тех пор мало подвергался
+//  каким-либо изменениям
 
 public class CameraRaycast : MonoBehaviour
 {
     public static Transform CameraTransform;
 
-    private bool AbleToClick = true;
-    private CharacterController Player;
-    private Camera currentCamera;
+    private bool _ableToClick = true;
+    private Camera _currentCamera;
 
     public static Vector3 BallForce;
     public static float DistanceToPoint;
@@ -16,9 +18,9 @@ public class CameraRaycast : MonoBehaviour
     public static bool IsBoard1;
     public static bool IsBoard2;
 
-    private BallLogic BallScript;
-    private PlayerController PlayerControllerScript;
-    private AudioPlayerLogic AudioScript;
+    private BallLogic _ballScript;
+    private PlayerController _playerControllerScript;
+    private AudioPlayerLogic _audioScript;
     public static string CurrentBall;
 
     public Transform ShootPoint;
@@ -27,23 +29,20 @@ public class CameraRaycast : MonoBehaviour
 
     public bool AbleToShowPointCam;
 
-    private bool BoardDetected;
-    // private GamemodeSelector GamemodeScript;
+    private bool _boardDetected;
 
     void Start()
     {
-        currentCamera = Camera.main;
-        // GamemodeScript = FindObjectOfType<GamemodeSelector>();
-        BallScript = GameObject.FindObjectOfType<BallLogic>();
-        AudioScript = FindObjectOfType<AudioPlayerLogic>();
+        _currentCamera = Camera.main;
+        _ballScript = GameObject.FindObjectOfType<BallLogic>();
+        _audioScript = FindObjectOfType<AudioPlayerLogic>();
         ShootPoint = GameObject.Find("ShootPoint").transform;
-        //GameRulesScript = GameObject.Find("CANDYSHOP").GetComponent<NetworkGameRules>();
         CameraTransform = transform;
     }
 
     public void OnGameInit()
     {
-        PlayerControllerScript = GameObject.Find("PlayerController").GetComponent<PlayerController>();
+        _playerControllerScript = GameObject.Find("PlayerController").GetComponent<PlayerController>();
     }
 
     void Update()
@@ -53,58 +52,61 @@ public class CameraRaycast : MonoBehaviour
 
     private void Raycast()
     {
-        Ray CameraRay = currentCamera.ScreenPointToRay(new Vector3(Screen.width/2, Screen.height/2, CameraTransform.position.z));
+        Ray cameraRay = _currentCamera.ScreenPointToRay(new Vector3(Screen.width/2, Screen.height/2, CameraTransform.position.z));
 
-        RaycastHit CameraHit;
-        RaycastHit CameraToRingHit;
+        RaycastHit cameraHit;
+        RaycastHit cameraToRingHit;
 
+        //  так как на сегодняшний момент игра не подразумевает оповощения игрока о том, что
+        //  он навёл камеру на тот или иной предмет, логика рейкастов запускается по нажатию
+        //  левой кнопкой мыши (или при удерживании пальца на экране телефона)
         if(Input.GetMouseButton(0))
         {
-            if(Physics.Raycast(CameraRay, out CameraHit, Mathf.Infinity) && !BallScript.IsGrabed)
+            if(Physics.Raycast(cameraRay, out cameraHit, Mathf.Infinity) && !_ballScript.IsGrabed)
             {
-                if(CameraHit.transform.tag == "Ball")
+                if(cameraHit.transform.tag == "Ball")
                 {
-                    BallScript = CameraHit.transform.GetComponent<BallLogic>();
+                    _ballScript = cameraHit.transform.GetComponent<BallLogic>();
 
-                    if (!BallScript.OnAir)
+                    if (!_ballScript.OnAir)
                     {
-                        BallScript.PhysicDisable();
+                        _ballScript.PhysicDisable();
                     }
                 }
                 
-                if(CameraHit.transform.name == "LED_next" && AbleToClick)
+                if(cameraHit.transform.name == "LED_next" && _ableToClick)
                 {
 
                     StartCoroutine(StartTimerForAbleToClick());
-                    AudioScript.OnNextTrack();
+                    _audioScript.OnNextTrack();
                 }
-                else if(CameraHit.transform.name == "LED_preview" && AbleToClick)
+                else if(cameraHit.transform.name == "LED_preview" && _ableToClick)
                 {
                     StartCoroutine(StartTimerForAbleToClick());
-                    AudioScript.OnPreviewTrack();
+                    _audioScript.OnPreviewTrack();
                 }
             }
 
-            if(BallScript.IsGrabed)
+            if(_ballScript.IsGrabed)
             {
-                if(Physics.Raycast(CameraRay, out CameraToRingHit, Mathf.Infinity, 9))
+                if(Physics.Raycast(cameraRay, out cameraToRingHit, Mathf.Infinity, 9))
                 {
-                    if(CameraHit.transform.name == "Board1Trigger")
+                    if(cameraHit.transform.name == "Board1Trigger")
                     {
                         IsBoard1 = true;
                         AbleToShowPointCam = true;
 
-                        if(BoardDetected == false)
+                        if(_boardDetected == false)
                         {
                             OnBoardDetected(true);
                         }
                     }
-                    else if(CameraHit.transform.name == "Board2Trigger")
+                    else if(cameraHit.transform.name == "Board2Trigger")
                     {
                         IsBoard2 = true;
                         AbleToShowPointCam = true;
 
-                        if(BoardDetected == false)
+                        if(_boardDetected == false)
                         {
                             OnBoardDetected(true);
                         }
@@ -121,32 +123,38 @@ public class CameraRaycast : MonoBehaviour
 
                 if(IsBoard1 || IsBoard2)
                 {
-                    coef = 0.42f * 4.6f / BallScript.Maginude;
-                    BallScript.ForceConst = Mathf.Clamp(0.0088445f * Mathf.Pow(BallScript.Maginude, 4) -0.2743184f * Mathf.Pow(BallScript.Maginude, 3) + 2.8879387f * Mathf.Pow(BallScript.Maginude, 2) - 5.0169378f * BallScript.Maginude + 82.8919099f, 0, 160);
+                    //  на тот момент это было лучшим решением по заданию траектории полёта мяча в сторону корзины
+                    //  
+                    //  формула была выведена посредством нахождения 10ти точек броска мяча в кольцо вдоль одной прямой,
+                    //  после чего значения были подставлены в определенный вид математического уравнения, чтобы высчитать
+                    //  промежуточные результаты
+                    //  
+                    //  после этого мяч стал с вероятностью в 98% попадать в кольцо, из-за чего пришлось вводить различные
+                    //  коэффициенты для внесения погрешности
+                    coef = 0.42f * 4.6f / _ballScript.Maginude;
+                    _ballScript.ForceConst = Mathf.Clamp(0.0088445f * Mathf.Pow(_ballScript.Maginude, 4) -0.2743184f * Mathf.Pow(_ballScript.Maginude, 3) + 2.8879387f * Mathf.Pow(_ballScript.Maginude, 2) - 5.0169378f * _ballScript.Maginude + 82.8919099f, 0, 160);
 
-                    Vector3 ShootPos = CameraTransform.position - (CameraTransform.rotation * new Vector3(0, 0, -BallScript.Maginude * coef));
+                    Vector3 ShootPos = CameraTransform.position - (CameraTransform.rotation * new Vector3(0, 0, -_ballScript.Maginude * coef));
 
                     ShootPoint.position = new Vector3(Mathf.Clamp(ShootPos.x, -17, 17), Y, Mathf.Clamp(ShootPos.z, -17, 17));
                 }
                 else
                 {
                     ShootPoint.position = CameraTransform.position + CameraTransform.forward * 6;
-                    BallScript.ForceConst = 100;
+                    _ballScript.ForceConst = 100;
                 }
             }
         }
 
-        if(Input.GetMouseButtonUp(0) && BallScript.IsGrabed)
-        {
-            BallScript.PhysicEnable();
-        }
+        if(Input.GetMouseButtonUp(0) && _ballScript.IsGrabed)
+            _ballScript.PhysicEnable();
     }
 
     private IEnumerator StartTimerForAbleToClick()
     {
-        AbleToClick = false;
+        _ableToClick = false;
         yield return new WaitForSeconds(0.5f);
-        AbleToClick = true;
+        _ableToClick = true;
         yield break;
     }
 
@@ -154,18 +162,18 @@ public class CameraRaycast : MonoBehaviour
     {
         if(_onDetected == true)
         {
-            if(BoardDetected == false)
+            if(_boardDetected == false)
             {
-                BoardDetected = true;
-                BallScript.SetForceOffset(true);
+                _boardDetected = true;
+                _ballScript.SetForceOffset(true);
             }
         }
         else
         {
-            if(BoardDetected == true)
+            if(_boardDetected == true)
             {
-                BoardDetected = false;
-                BallScript.SetForceOffset(false);
+                _boardDetected = false;
+                _ballScript.SetForceOffset(false);
             }
         }
     }

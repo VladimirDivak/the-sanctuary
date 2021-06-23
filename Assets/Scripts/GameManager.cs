@@ -1,8 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+
+//  класс с некрасивым названием работает с общей
+//  логикой поведения игры
 
 public class GameManager : MonoBehaviour
 {
@@ -10,40 +10,40 @@ public class GameManager : MonoBehaviour
     public static GameObject PlayerController;
     public static GameObject ShootPoint;
 
-    private GUI GUIScript;
+    private GUI _guiScript;
 
     public static bool SetControl = true;
     public static bool SetMovingControl = true;
     public static bool GameStarted;
 
-    private Vector3 StartCameraPosition;
-    private Quaternion StartCameraRotation;
+    private Vector3 _startCameraPosition;
+    private Quaternion _startCameraRotation;
 
-    private Cloth[] NetsClothes;
+    private Cloth[] _netsClothes;
 
     public List<ClothSphereColliderPair> ClothColliders = new List<ClothSphereColliderPair>();
-    private BackgroundCameraAnimation BGCamera;
+    private BackgroundCameraAnimation _bgCamera;
 
-    private UserInterface UI;
+    private UserInterface _ui;
 
     void Start()
     {
-        GUIScript = FindObjectOfType<GUI>();
+        _guiScript = FindObjectOfType<GUI>();
 
-        UI = GameObject.FindObjectOfType<UserInterface>();
-        UI.OnGameMenuEnter();
+        _ui = GameObject.FindObjectOfType<UserInterface>();
+        _ui.OnGameMenuEnter();
 
-        NetsClothes = GameObject.FindObjectsOfType<Cloth>();
+        _netsClothes = GameObject.FindObjectsOfType<Cloth>();
 
         MainCamera = GameObject.Find("PlayerController/Main Camera");
-        StartCameraPosition = MainCamera.transform.position;
-        StartCameraRotation = MainCamera.transform.rotation;
+        _startCameraPosition = MainCamera.transform.position;
+        _startCameraRotation = MainCamera.transform.rotation;
 
         PlayerController = GameObject.Find("PlayerController");
         PlayerController.SetActive(false);
 
-        BGCamera = GameObject.FindObjectOfType<BackgroundCameraAnimation>();
-        BGCamera.StartBackgroundCameraMoving();
+        _bgCamera = GameObject.FindObjectOfType<BackgroundCameraAnimation>();
+        _bgCamera.StartBackgroundCameraMoving();
 
         GUI.OnFadeOut += InitializationGame;
     }
@@ -58,7 +58,7 @@ public class GameManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        UI.OnGameMenuExit();
+        _ui.OnGameMenuExit();
         GUI.ShowRegistrationPanel(false);
         GUI.ShowGameUI(true);
 
@@ -71,7 +71,7 @@ public class GameManager : MonoBehaviour
         }
         
 
-        foreach(var cloth in NetsClothes)
+        foreach(var cloth in _netsClothes)
         {
             cloth.sphereColliders = ClothColliders.ToArray();
         }
@@ -86,14 +86,8 @@ public class GameManager : MonoBehaviour
     {
         if(Input.GetKeyDown(KeyCode.Escape) && GameStarted)
         {
-            if(UI.AbleToShowMenu)
-            {
-                UI.OnGameMenuEnter();
-            }
-            else
-            {
-                UI.OnGameMenuExit();
-            }
+            if(_ui.AbleToShowMenu) _ui.OnGameMenuEnter();
+            else _ui.OnGameMenuExit();
         }
     }
 }

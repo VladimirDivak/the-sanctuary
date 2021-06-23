@@ -8,46 +8,57 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
 
+//  да, знаю, что такие слова в названии класса, как
+//  "Logic", "Master", "Manager" и т.д. - дурной тон,
+//  но скрипт писался около года назад, по этому остался
+//  в первоначальном виде во многом
+//
+//  данный класс создан для управления логикой игрового
+//  музыкального плеера
+//
+//  сейчас работаю над подгрузкой данных с сервера,
+//  и с большой вероятностью скрип сильно изменится в ближайшее время
+
 [RequireComponent(typeof(AudioSource))]
 public class AudioPlayerLogic : MonoBehaviour
 {
-    private Dictionary<float, AudioClip> TracksDict = new Dictionary<float, AudioClip>();
+    private Dictionary<float, AudioClip> _tracksDict = new Dictionary<float, AudioClip>();
     [SerializeField]
     public AudioSource Source;
-    private LEDDisplayLogic LEDScript;
-    private List<float> TracksLenght;
+    private LEDDisplayLogic _ledScript;
+    private List<float> _tracksLenght;
     private List<AudioClip> _tracks = new List<AudioClip>();
 
     [SerializeField]
-    public GameObject _mainMenuBall;
+    public GameObject MainMenuBall;
 
     private float[] _clipSampleData;
     [SerializeField]
-    public float _updateStep = 0.005f;
+    public float UpdateStep = 0.005f;
     [SerializeField]
-    public int _sampleRate = 1024;
+    public int SampleRate = 1024;
     private float _currentUpdateTime = 0f;
-    public float _clipLoudness;
+    public float ClipLoudness;
     [SerializeField]
-    public float _sizeFactor = 20;
-    public float _minSize = 7;
-    public float _maxSize = 9;
+    public float SizeFactor = 20;
+    public float MinSize = 7;
+    public float MaxSize = 9;
 
     private Coroutine C_BallAudioVizualization;
 
     [SerializeField]
-    private GameObject _backgroundPanel;
+    private GameObject BackgroundPanel;
     
     private List<Texture2D> _trackCovers = new List<Texture2D>();
 
     [SerializeField]
-    public GameObject _networkData;
+    public GameObject NetworkData;
 
     private TMP_Text _trackNameText;
     private TMP_Text _artistNameText;
 
     [SerializeField]
-    public Material[] _networksMaterial;
+    public Material[] NetworksMaterial;
 
     List<Artist> _beatmakersList = new List<Artist>();
 
@@ -91,9 +102,9 @@ public class AudioPlayerLogic : MonoBehaviour
         //     FindObjectOfType<Network>().SendServerData("ServerGetTracksData");
         // }
 
-        _clipSampleData = new float[_sampleRate];
+        _clipSampleData = new float[SampleRate];
 
-        LEDScript = GameObject.Find("LEDText").GetComponent<LEDDisplayLogic>();
+        _ledScript = GameObject.Find("LEDText").GetComponent<LEDDisplayLogic>();
         Source = this.GetComponent<AudioSource>();
     }
 
@@ -103,12 +114,12 @@ public class AudioPlayerLogic : MonoBehaviour
 
         Source.Stop();
 
-        if(TracksLenght.IndexOf(Source.clip.length) != TracksLenght.Count - 1)
-        Source.clip = TracksDict[TracksLenght[TracksLenght.IndexOf(Source.clip.length)+1]];
+        if(_tracksLenght.IndexOf(Source.clip.length) != _tracksLenght.Count - 1)
+        Source.clip = _tracksDict[_tracksLenght[_tracksLenght.IndexOf(Source.clip.length)+1]];
         else
-        Source.clip = TracksDict[TracksLenght[0]];
+        Source.clip = _tracksDict[_tracksLenght[0]];
 
-        LEDScript.SetLEDTrackName(Source.clip.name, Source.clip.length);
+        _ledScript.SetLEDTrackName(Source.clip.name, Source.clip.length);
         Source.Play();
 
         SetTrackData(Source.clip.name);
@@ -122,12 +133,12 @@ public class AudioPlayerLogic : MonoBehaviour
 
         Source.Stop();
 
-        if(TracksLenght.IndexOf(Source.clip.length) != 0)
-        Source.clip = TracksDict[TracksLenght[TracksLenght.IndexOf(Source.clip.length)-1]];
+        if(_tracksLenght.IndexOf(Source.clip.length) != 0)
+        Source.clip = _tracksDict[_tracksLenght[_tracksLenght.IndexOf(Source.clip.length)-1]];
         else
-        Source.clip = TracksDict[TracksLenght[TracksLenght.Count - 1]];
+        Source.clip = _tracksDict[_tracksLenght[_tracksLenght.Count - 1]];
 
-        LEDScript.SetLEDTrackName(Source.clip.name, Source.clip.length);
+        _ledScript.SetLEDTrackName(Source.clip.name, Source.clip.length);
         Source.Play();
 
         SetTrackData(Source.clip.name);
@@ -149,28 +160,30 @@ public class AudioPlayerLogic : MonoBehaviour
         }
     }
 
+    //  метод описывает поведения фонового мяча на заднем плане главного меню
+    //  в зависимости от преобладания в треке низких частот
     private IEnumerator BallVizualization()
     {
         yield return null;
         while(true)
         {
             _currentUpdateTime += Time.deltaTime;
-            if(_currentUpdateTime >= _updateStep)
+            if(_currentUpdateTime >= UpdateStep)
             {
                 _currentUpdateTime = 0;
                 Source.clip.GetData(_clipSampleData, Source.timeSamples);
-                _clipLoudness = 0;
+                ClipLoudness = 0;
 
                 foreach(var sample in _clipSampleData)
                 {
-                    _clipLoudness += Mathf.Abs(sample);
+                    ClipLoudness += Mathf.Abs(sample);
                 }
 
-                _clipLoudness /= _sampleRate;
-                _clipLoudness *= _sizeFactor;
-                _clipLoudness = Mathf.Clamp(_clipLoudness, _minSize, _maxSize);
+                ClipLoudness /= SampleRate;
+                ClipLoudness *= SizeFactor;
+                ClipLoudness = Mathf.Clamp(ClipLoudness, MinSize, MaxSize);
 
-                _mainMenuBall.transform.localScale = Vector3.Lerp(_mainMenuBall.transform.localScale, new Vector3(1, 1, 1) * _clipLoudness, Time.deltaTime);
+                MainMenuBall.transform.localScale = Vector3.Lerp(MainMenuBall.transform.localScale, new Vector3(1, 1, 1) * ClipLoudness, Time.deltaTime);
             }
 
             yield return null;
@@ -186,8 +199,8 @@ public class AudioPlayerLogic : MonoBehaviour
             Destroy(item);
         }
         
-        Material BGMaterial = _backgroundPanel.GetComponent<MeshRenderer>().material;
-        Texture2D Cover = _trackCovers.Where(x => x.name.Contains(Text[0].ToLower())).ToList().FirstOrDefault();
+        Material BGMaterial = BackgroundPanel.GetComponent<MeshRenderer>().material;
+        Texture2D Cover = _trackCovers.First(x => x.name.Contains(Text[0].ToLower()));
         if(Cover == null) Cover = _trackCovers.LastOrDefault();
 
         float Yoffset = 0.3f;
@@ -197,14 +210,14 @@ public class AudioPlayerLogic : MonoBehaviour
         _artistNameText.text = Text[0];
         _trackNameText.text = Text[1];
 
-        foreach(var network in _beatmakersList.Where(x => x.GetArtistName() == Text[0]).FirstOrDefault().GetArtistContacts())
+        foreach(var network in _beatmakersList.First(x => x.GetArtistName() == Text[0]).GetArtistContacts())
         {
             GameObject NetworkDataObject;
             Material DataObjectMaterial;
 
             if(network.Value != string.Empty)
             {
-                NetworkDataObject = Instantiate(_networkData, Vector3.zero, Quaternion.Euler(new Vector3(90, 0, 0)));
+                NetworkDataObject = Instantiate(NetworkData, Vector3.zero, Quaternion.Euler(new Vector3(90, 0, 0)));
                 DataObjectMaterial = NetworkDataObject.GetComponentInChildren<MeshRenderer>().material;
                 NetworkDataObject.transform.SetParent(transform);
                 NetworkDataObject.transform.localPosition = new Vector3(0.72f, Yoffset, -0.3f);
@@ -213,13 +226,14 @@ public class AudioPlayerLogic : MonoBehaviour
 
                 NetworkDataObject.GetComponentInChildren<TMP_Text>().text = network.Value;
 
-                DataObjectMaterial = _networksMaterial.Where(x => x.name.Contains(network.Key)).ToList().FirstOrDefault();
+                DataObjectMaterial = NetworksMaterial.First(x => x.name.Contains(network.Key));
 
                 NetworkDataObject.GetComponentInChildren<MeshRenderer>().material = DataObjectMaterial;
             }
         }
     }
 
+    //  находится в разработке
     public void UnpackTracksData(Track[] tracks)
     {
         Debug.Log(tracks.Length);
@@ -239,6 +253,7 @@ public class AudioPlayerLogic : MonoBehaviour
         }
     }
 
+    //  находится в разработке
     private IEnumerator DowloadTracksData()
     {
         yield return null;
@@ -268,13 +283,13 @@ public class AudioPlayerLogic : MonoBehaviour
 
             foreach(var item in _tracks)
             {
-                TracksDict.Add(item.length, item);
+                _tracksDict.Add(item.length, item);
             }
 
-            TracksLenght = new List<float>(TracksDict.Keys);
+            _tracksLenght = new List<float>(_tracksDict.Keys);
 
-            Source.clip = TracksDict[TracksLenght[UnityEngine.Random.Range(0, TracksLenght.Count)]];
-            LEDScript.SetLEDTrackName(Source.clip.name, Source.clip.length);
+            Source.clip = _tracksDict[_tracksLenght[UnityEngine.Random.Range(0, _tracksLenght.Count)]];
+            _ledScript.SetLEDTrackName(Source.clip.name, Source.clip.length);
             Source.Play();
 
             BallVizualization(true);

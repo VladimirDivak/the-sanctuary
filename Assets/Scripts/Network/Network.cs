@@ -5,6 +5,16 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.SignalR.Client;
 using System;
 
+
+//  данный класс ответственен за всё, что связано с клиент-серверным
+//  взаимодействием в игре. здесь осуществляется:
+//      -   подключение к серверу;
+//      -   подписка на его события;
+//      -   создание внутреигровых событий (посредством событий типа Action<T>);
+//      -   формирование запросов на события клиента.
+//  серверная часть работает на ASP.NET Core используя SignalR.
+
+
 public class Network : MonoBehaviour
 {
     public static Account accountData = new Account();
@@ -41,6 +51,9 @@ public class Network : MonoBehaviour
         SendServerData("ServerGetRoomsList");
     }    
 
+    //  ниже описаны метод с его расширениями по вызову событий на сервере
+    //  с передачей данных с предварительой сериализацией
+
     public async void SendServerData(string serverEventName)
     {
         if(_connection.State == HubConnectionState.Disconnected) return;
@@ -73,6 +86,11 @@ public class Network : MonoBehaviour
 
         if(data2.GetType() == typeof(string)) jsonData2 = data2 as string;
         else jsonData2 = JsonConvert.SerializeObject(data2);
+
+        //  события игровых режимов, по моей задумке, обмениваются массивами строк,
+        //  т.к. аргументы внутри того или иного режима будут отличаться друг от друга
+        //  по количеству и содержанию вводных данных, по этому предусмотрен вариант
+        //  создания масства из сериализованных данных
 
         if(createArray)
         {
@@ -114,12 +132,15 @@ public class Network : MonoBehaviour
         else await _connection.SendAsync(serverEventName, jsonData1, jsonData2, jsonData3);
     }
 
+    //  блок описания подключения к серверу и подписки на его события
+
     public async void StartNetworkConnection()
     {
         _connection = new HubConnectionBuilder()
         .WithUrl("http://192.168.0.159:5000/mainHub")
         .Build();
 
+        //  событие по попытке авторизации клиента
         _connection.On<string, string>("PlayerAuthorization", (PersonalData, id) =>
         {
             if(PersonalData != string.Empty)
@@ -129,8 +150,11 @@ public class Network : MonoBehaviour
             }
         });
 
+        //  событие, вызванное при ошибке ввода логина/пароля
         _connection.On("PlayerRegistrationException", ()=> accountRegistrationState = false);
 
+        //  событие по отправленному клиентом запросу на количество созданных на
+        //  текущий момент игровых комнат на сервере
         _connection.On<string>("PlayerOnRoomsListRequest", rooms =>
         {
             if(rooms != string.Empty)
@@ -141,6 +165,10 @@ public class Network : MonoBehaviour
             }
         });
 
+        //  событие по запросу клиентом данных о треках для плеера:
+        //  если данные на клиенте не соответствуют данным на серевере -
+        //  клиент запрашивает недостоющие треки или же удаляет те, что
+        //  не существуют на сервере
         _connection.On<string>("PlayerGetTracksData", x =>
         {
             var data = JsonConvert.DeserializeObject<Track[]>(x);
@@ -149,6 +177,7 @@ public class Network : MonoBehaviour
             FindObjectOfType<AudioPlayerLogic>().UnpackTracksData(data);
         });
 
+        //  событие по запросу клиента на создание новой игровой комнаты
         _connection.On<string>("PlayerOnNewRoomCreated", room =>
         {
             if(room != string.Empty)
@@ -176,6 +205,8 @@ public class Network : MonoBehaviour
             else FindObjectOfType<GUI>().ShowPopUpMessage("no free places for a room", Color.red, PopUpMessageType.Error);
         });
 
+        //  событие по подлючению в игровую комнату нового игрока
+        //  (вызывается в случае если клиент находится в игровой комнате)
         _connection.On<string, string>("PlayerOnConnection", (playerSessionId, playerAccountData) =>
         {
             try
@@ -191,6 +222,7 @@ public class Network : MonoBehaviour
             }
         });
 
+        //  событие по запросу игроком данным о комнате, к которой он подключился
         _connection.On<string, string, string, string>("PlayerGetRoomData", (creatorID, gameModeName, accountsData, playersReadyStatusData) =>
         {
             try
@@ -214,15 +246,17 @@ public class Network : MonoBehaviour
             }
         });
 
+        //  событие по смене одним из игроков статуса готовности к игре
         _connection.On<string>("PlayerOnReadyStatusChanged", playerSessionId => OnReadyStatusChangedEvent?.Invoke(playerSessionId));
+        //  событие по закрытию игровой комнаты
         _connection.On<string>("PlayerOnRoomClosed", roomID => OnRoomClosedEvent?.Invoke(int.Parse(roomID)));
-
+        //  событие по открытию игровой комнаты
         _connection.On<string>("PlayerOnRoomOpen", roomData =>
         {
             var room = JsonConvert.DeserializeObject<RoomBase>(roomData);
             OnRoomOpenEvent?.Invoke(room);
         });
-
+        //  событие по отключению игрока от игровой комнаты
         _connection.On<string>("PlayerOnDisconnection", playerSessionId =>
         {
             try
@@ -234,13 +268,13 @@ public class Network : MonoBehaviour
                 Debug.LogError(ex);
             }
         });
-        
+        //  событие по инициализации игрового режима
         _connection.On<string>("PlayerOnGameInitialization", e =>
         {
             var eventArgs = JsonConvert.DeserializeObject<string[]>(e);
             OnGameInitializationEvent?.Invoke(eventArgs);
         });
-
+        //  событие по броску игроками мяча
         _connection.On<string, string>("PlayerOnBallThrowing", (a1, a2) =>
         {
             try
@@ -255,7 +289,7 @@ public class Network : MonoBehaviour
                 Debug.LogError(ex);
             }
         });
-
+        //  событие по движению игроков
         _connection.On<string, string>("PlayerOnBallMoving", (a1, a2) =>
         {
             try
@@ -270,19 +304,19 @@ public class Network : MonoBehaviour
                 Debug.LogError(ex);
             }
         });
-
+        //  событие по попаданию мячом в кольцо
         _connection.On<string>("PlayerOnBallScoreGetting", e =>
         {
             var eventArgs = JsonConvert.DeserializeObject<string[]>(e);
             OnBallScoreGettingEvent?.Invoke(eventArgs);
         });
-
+        //  событие по соприкасновению мяча с паркетом
         _connection.On<string>("PlayerOnBallParketGetting", e =>
         {
             var eventArgs = JsonConvert.DeserializeObject<string[]>(e);
             OnBallParketGettingEvent?.Invoke(eventArgs);
         });
-
+        //  событие по окончании игры
         _connection.On<string>("PlayerOnGameEnding", e =>
         {
             var eventArgs = JsonConvert.DeserializeObject<string[]>(e);
@@ -309,6 +343,9 @@ public class Network : MonoBehaviour
     }
 }
 
+
+//  класс комнаты для того, чтобы отобразить ее данные
+//  в списке игровых комнат
 public class Room : RoomBase
 {
     public Room(int roomId, string modeName, int playersCounter, string creatorSessionId)

@@ -5,6 +5,9 @@ using UnityEngine.UI;
 using UnityEngine;
 using System;
 
+//  данный класс описывает работу панели
+//  регистрации/авторизации клиента
+
 public class RegPanel : MonoBehaviour
 {
     private GameObject _loginBlock;
@@ -270,7 +273,7 @@ public class RegPanel : MonoBehaviour
 
             var FieldKey = TextName.Split('_');
 
-            var FieldShadow = GetComponentsInChildren<InputField>().Where(x => x.name.Contains(FieldKey[1])).ToList().Last().GetComponent<Shadow>();
+            var FieldShadow = GetComponentsInChildren<InputField>().Last(x => x.name.Contains(FieldKey[1])).GetComponent<Shadow>();
             FieldShadow.effectColor = RedColor;
             ActiveShadows.Add(FieldShadow);
         }
@@ -310,13 +313,13 @@ public class RegPanel : MonoBehaviour
                     ColorUtility.TryParseHtmlString(Network.accountData.baseColor, out baseColor);
                     ColorUtility.TryParseHtmlString(Network.accountData.linesColor, out linesColor);
 
-                    material.SetColor(BallCustomize._baseColorID, baseColor);
-                    material.SetColor(BallCustomize._linesColorID, linesColor);
+                    material.SetColor(BallCustomize.baseColorID, baseColor);
+                    material.SetColor(BallCustomize.linesColorID, linesColor);
 
                     if(Network.accountData.usePattern)
                     {
-                        material.SetTexture(BallCustomize._patternTextureID,
-                        BallCustomize._patternsStatic.Where(x => x.name == Network.accountData.patternName).ToList().FirstOrDefault());
+                        material.SetTexture(BallCustomize.patternTextureID,
+                        BallCustomize.PatternsStatic.Where(x => x.name == Network.accountData.patternName).ToList().FirstOrDefault());
                     }
                 }
 

@@ -3,6 +3,14 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
+//  скрипт, описывающий логику работы всего (почти),
+//  что связано с игровым инетрфесом
+//  
+//  сейчас я понимаю, что нужно было использовать
+//  C#-интерфейсы, чтобы описать классы игровых окон,
+//  а также создать здесть общий для всех элементов эффект
+//  плавного затухания и появления элементов на экране
+
 public enum PopUpMessageType
 {
     Info,
@@ -27,7 +35,7 @@ public class GUI : MonoBehaviour
     [SerializeField]
     public GameObject PopUpPanel;
     [SerializeField]
-    private GameObject _fadeTextureObject;
+    private GameObject FadeTextureObject;
     private Image _fadeTexture;
 
     [SerializeField]
@@ -38,6 +46,8 @@ public class GUI : MonoBehaviour
     [HideInInspector] public GameObject PopUpIcon;
     [HideInInspector] public GameObject PopUpContainer;
 
+    //  метод создаёт в углу интерфеса изображение с камеры, следующей
+    //  за мячом в момент броска
     public void SetActivePointCam(bool isActive, Transform CurrentBall)
     {
         if(isActive)
@@ -58,7 +68,7 @@ public class GUI : MonoBehaviour
 
     void Start()
     {
-        _fadeTexture = _fadeTextureObject.GetComponent<Image>();
+        _fadeTexture = FadeTextureObject.GetComponent<Image>();
         SetFade(0.2f);
 
         _roomsPanel = GameObject.Find("RoomsPanel");
@@ -243,13 +253,7 @@ public class GUI : MonoBehaviour
 
     public void ShowThirdPointLineText(bool _show)
     {
-        if(_show)
-        {
-            _thirdPointLineText.SetActive(true);
-        }
-        else
-        {
-            _thirdPointLineText.SetActive(false);
-        }
+        if(_show) _thirdPointLineText.SetActive(true);
+        else _thirdPointLineText.SetActive(false);
     }
 }

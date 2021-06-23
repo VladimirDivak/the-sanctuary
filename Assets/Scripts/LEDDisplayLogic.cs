@@ -2,34 +2,41 @@
 using System;
 using UnityEngine;
 
+//  данный класс работает с цифровым табло,
+//  на котором отображается информация о
+//  текущем треке, а также имеется логика
+//  переключения треков на следующий и предыдущий
+
 public class LEDDisplayLogic : MonoBehaviour
 {
     [HideInInspector] public TextMesh Mesh;
-    private string Text = string.Empty;
-    private GameObject NextButton;
-    private GameObject PreviewButton;
-    private bool AbleToChangeText = true;
-    private string[] TrackName;
-    private float TrackTime;
-    private AudioPlayerLogic AudioPlayerScript;
+    private string _text = string.Empty;
+    private GameObject _nextButton;
+    private GameObject _previewButton;
+    private bool _ableToChangeText = true;
+    private string[] _trackName;
+    private float _trackTime;
+    private AudioPlayerLogic _audioPlayerScript;
 
-    private Coroutine setTrackTime;
+    private Coroutine _setTrackTime;
     public static string CurrentArtsistName;
 
     void Start()
     {
-        AudioPlayerScript = FindObjectOfType<AudioPlayerLogic>();
-        NextButton = GameObject.Find("LED_next");
-        PreviewButton = GameObject.Find("LED_preview");
+        _audioPlayerScript = FindObjectOfType<AudioPlayerLogic>();
+        _nextButton = GameObject.Find("LED_next");
+        _previewButton = GameObject.Find("LED_preview");
         Mesh = this.GetComponent<TextMesh>();
     }
-
+    
+    //  изначально подключение и отключение игроков
+    //  от игры сопровождалось бегущей строкой на табло
     public IEnumerator OnNewMessage(string _msg)
     {
-        AbleToChangeText = false;
+        _ableToChangeText = false;
 
-        NextButton.SetActive(false);
-        PreviewButton.SetActive(false);
+        _nextButton.SetActive(false);
+        _previewButton.SetActive(false);
 
         int lastsize = Mesh.fontSize;
         Mesh.fontSize = 115;
@@ -71,41 +78,42 @@ public class LEDDisplayLogic : MonoBehaviour
             yield return new WaitForSecondsRealtime(0.15f);
         }
 
-        Mesh.text = Text;
+        Mesh.text = _text;
         Mesh.fontSize = lastsize;
 
-        NextButton.SetActive(true);
-        PreviewButton.SetActive(true);
+        _nextButton.SetActive(true);
+        _previewButton.SetActive(true);
 
-        AbleToChangeText = true;
+        _ableToChangeText = true;
 
         yield return null;
     }
 
     public void SetLEDTrackName(string _name, float _length)
     {
-        TrackName = _name.Split('-');
-        TrackTime = _length;
+        _trackName = _name.Split('-');
+        _trackTime = _length;
 
-        CurrentArtsistName = TrackName[0].ToLower();
+        CurrentArtsistName = _trackName[0].ToLower();
 
         if(GameManager.GameStarted == true) GameObject.FindObjectOfType<ArtistNamePanel>().ShowNewArtistName();
 
-        if(setTrackTime == null)
-        {
-            setTrackTime = StartCoroutine(SetTrackTime(_length));
-        }
+        if(_setTrackTime == null)
+            _setTrackTime = StartCoroutine(SetTrackTime(_length));
         else
         {
-            StopCoroutine(setTrackTime);
-            setTrackTime = StartCoroutine(SetTrackTime(_length));
+            StopCoroutine(_setTrackTime);
+            _setTrackTime = StartCoroutine(SetTrackTime(_length));
         }
     }
 
+    //  данный перечислитель высчитывает оставшееся время
+    //  не совсем коррктно из-за отсутствия верного учёта
+    //  погрешности в миллисекундах
     private IEnumerator SetTrackTime(float _length)
     {
-        int min = Mathf.FloorToInt(TrackTime / 60);
-        int sec = Mathf.RoundToInt(TrackTime % 60);
+        int min = Mathf.FloorToInt(_trackTime / 60);
+        int sec = Mathf.RoundToInt(_trackTime % 60);
         float DynamicLength = _length;
 
         if(sec > 60)
@@ -120,7 +128,7 @@ public class LEDDisplayLogic : MonoBehaviour
         {
             yield return null;
 
-            if((min == 0 && sec == 1) || AudioPlayerScript.Source.isPlaying == false)
+            if((min == 0 && sec == 1) || _audioPlayerScript.Source.isPlaying == false)
             {
                 break;
             }
@@ -132,14 +140,14 @@ public class LEDDisplayLogic : MonoBehaviour
             }
             if(sec >= 10)
             {
-                Text = $"{TrackName[0]}\n{TrackName[1]}\n-{min}:{sec}";
+                _text = $"{_trackName[0]}\n{_trackName[1]}\n-{min}:{sec}";
             }
             else
             {
-                Text = $"{TrackName[0]}\n{TrackName[1]}\n-{min}:0{sec}";
+                _text = $"{_trackName[0]}\n{_trackName[1]}\n-{min}:0{sec}";
             }
 
-            if(AbleToChangeText) Mesh.text = Text;
+            if(_ableToChangeText) Mesh.text = _text;
 
             if(DynamicLength >= 1)
             {
@@ -154,7 +162,7 @@ public class LEDDisplayLogic : MonoBehaviour
             }
         }
 
-        AudioPlayerScript.OnNextTrack();
+        _audioPlayerScript.OnNextTrack();
 
         yield return null;
     }

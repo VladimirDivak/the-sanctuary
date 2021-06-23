@@ -1,47 +1,53 @@
 ﻿using UnityEngine;
 using System.Linq;
 
+
+//  данный скрипт описывает поведение камеры,
+//  следующей за мячом в момент броска в кольцо
 public class PointCam : MonoBehaviour
 {
-    private Transform PointCamTransform;
-    private Transform BallTransform;
-    private Vector3 DefaultPos;
-    private Vector3 DefaultRot;
-    private Vector3 ConstOffset;
+    private Transform _pointCamTransform;
+    private Transform _ballTransform;
+    private Vector3 _defaultPos;
+    private Vector3 _defaultRot;
+    private Vector3 _constOffset;
 
-    private Vector3 Net1forAngle, Net2forAngle;
+    private Vector3 _net1forAngle, _net2forAngle;
 
-    private string CurrentBall;
-    private BallLogic BallScript;
+    private string _currentBall;
+    private BallLogic _ballScript;
 
-    private Vector3 Net1, Net2;
+    private Vector3 _net1, _net2;
 
-    private Vector3 CameraDirection;
-    private Vector3 NetPosition;
+    private Vector3 _cameraDirection;
+    private Vector3 _netPosition;
 
     void Start()
     {
-        Net1 = GameObject.FindGameObjectsWithTag("ScoreTrigger").Where(x => x.transform.name == "ScoreTriggerLeft").Last().transform.position;
-        Net2 = new Vector3(-Net1.x, Net1.y, Net1.z);
+        _net1 = GameObject.FindGameObjectsWithTag("ScoreTrigger").Last(x => x.transform.name == "ScoreTriggerLeft").transform.position;
+        _net2 = new Vector3(-_net1.x, _net1.y, _net1.z);
+        
+        //  поле осталось еще с тех времен, когда
+        //  на площадке присутствовал один мяч игрока
+        //  и мячи сетевых игроков
+        _ballScript = GameObject.FindObjectOfType<BallLogic>();
 
-        BallScript = GameObject.FindObjectOfType<BallLogic>();
+        _net1forAngle = new Vector3(_net1.x, 0, 0);
+        _net2forAngle = new Vector3(-_net1.x, 0, 0);
 
-        Net1forAngle = new Vector3(Net1.x, 0, 0);
-        Net2forAngle = new Vector3(-Net1.x, 0, 0);
+        _pointCamTransform = transform;
+        _defaultPos = _pointCamTransform.position;
+        _defaultRot = _pointCamTransform.rotation.eulerAngles;
+        _constOffset = new Vector3(12.369f, 3.802f, 0) - _pointCamTransform.position;
 
-        PointCamTransform = transform;
-        DefaultPos = PointCamTransform.position;
-        DefaultRot = PointCamTransform.rotation.eulerAngles;
-        ConstOffset = new Vector3(12.369f, 3.802f, 0) - PointCamTransform.position;
-
-        BallTransform = GameObject.FindGameObjectWithTag("Ball").transform;
+        _ballTransform = GameObject.FindGameObjectWithTag("Ball").transform;
     }
     
     public void OnBallGrab(Transform _ball)
     {
-        BallTransform = _ball;
-        CurrentBall = BallTransform.transform.name;
-        BallScript = BallTransform.GetComponent<BallLogic>();
+        _ballTransform = _ball;
+        _currentBall = _ballTransform.transform.name;
+        _ballScript = _ballTransform.GetComponent<BallLogic>();
     }
 
     private void Update()
@@ -51,16 +57,16 @@ public class PointCam : MonoBehaviour
         float RotationOffset = 90;
 
         Vector3 NetAngle = new Vector3();
-        Vector3 Offset = ConstOffset;
+        Vector3 Offset = _constOffset;
 
         Vector3 Test = new Vector3();
 
         if(CameraRaycast.IsBoard1)
         {
-            NetPosition = Net1;
+            _netPosition = _net1;
 
-            NetAngle = Net1forAngle;
-            if(BallScript.StartToFlyPosition.z < 0)
+            NetAngle = _net1forAngle;
+            if(_ballScript.StartToFlyPosition.z < 0)
             {
                 AngleModule = -1;
                 Test = new Vector3(Test.x, Test.y, -Test.z);
@@ -68,11 +74,11 @@ public class PointCam : MonoBehaviour
         }
         else if(CameraRaycast.IsBoard2)
         {
-            NetPosition = Net2;
+            _netPosition = _net2;
 
-            Offset = new Vector3(ConstOffset.x - 0.438f, ConstOffset.y, ConstOffset.z);
-            NetAngle = Net2forAngle;
-            if(BallScript.StartToFlyPosition.z > 0)
+            Offset = new Vector3(_constOffset.x - 0.438f, _constOffset.y, _constOffset.z);
+            NetAngle = _net2forAngle;
+            if(_ballScript.StartToFlyPosition.z > 0)
             {
                 AngleModule = -1;
                 Test = new Vector3(Test.x, Test.y, -Test.z);
@@ -80,16 +86,16 @@ public class PointCam : MonoBehaviour
             RotationOffset *= -1;
         }
 
-        Angle = Vector3.Angle(NetAngle, NetAngle - BallScript.StartToFlyPosition) * AngleModule;
-        PointCamTransform.rotation = Quaternion.Euler(new Vector3(30, Angle + RotationOffset, 0));
+        Angle = Vector3.Angle(NetAngle, NetAngle - _ballScript.StartToFlyPosition) * AngleModule;
+        _pointCamTransform.rotation = Quaternion.Euler(new Vector3(30, Angle + RotationOffset, 0));
 
-        PointCamTransform.position = CameraDirection * ConstOffset.magnitude + BallTransform.position - new Vector3(0, ConstOffset.y, 0);
+        _pointCamTransform.position = _cameraDirection * _constOffset.magnitude + _ballTransform.position - new Vector3(0, _constOffset.y, 0);
     }
 
     public void OnBallThrow(string _newBall)
     {
         var GUIScript = GameManager.FindObjectOfType<GUI>();
-        CameraDirection = -(new Vector3(NetPosition.x, 0, NetPosition.z) - new Vector3(BallTransform.position.x, 0, BallTransform.position.z)).normalized;
-        if(_newBall == CurrentBall) GUIScript.SetActivePointCam(false, null);
+        _cameraDirection = -(new Vector3(_netPosition.x, 0, _netPosition.z) - new Vector3(_ballTransform.position.x, 0, _ballTransform.position.z)).normalized;
+        if(_newBall == _currentBall) GUIScript.SetActivePointCam(false, null);
     }
 }

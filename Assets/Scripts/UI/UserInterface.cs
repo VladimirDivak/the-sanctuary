@@ -5,6 +5,9 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
+
+//  данный скрипт описывает работу главного меню игры,
+//  представляющего собой 3D-объекты
 public class UserInterface : MonoBehaviour
 {
     private DepthOfField _depthOfField;

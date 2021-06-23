@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using TheSanctuary;
 
+//  данный класс описывает поведение тгрового мяча игрока
+
 public class BallLogic : MonoBehaviour
 {
     [SerializeField]
@@ -11,79 +13,72 @@ public class BallLogic : MonoBehaviour
     Material TransparentMaterial;
 
     public Material StandartMaterial;
-    MeshRenderer MeshRenderer;
+    MeshRenderer _meshRenderer;
 
-    private Transform BallTransform;
-    Transform ControllerTransform;
+    private Transform _ballTransform;
+    private Transform _controllerTransform;
 
-    private Rigidbody BallRigidBody;
+    private Rigidbody _ballRigidBody;
     public bool IsGrabed;
-    private bool SetForceReady;
-    private AudioSource BouncesSource;
+    private bool _setForceReady;
+    private AudioSource _bouncesSource;
 
     public float ForceConst = 100;
 
-    // private NetworkGameRules GameRulesScript;
-    private GUI GUIScript;
-    private Network networkScript;
-    private CameraRaycast CameraScript;
-    private Arcade ArcadeScript;
+    private GUI _guiScript;
+    private Network _networkScript;
+    private CameraRaycast _cameraScript;
 
     public bool OnAir;
     public bool itsPoint;
     public int ParketHitCount = 0;
 
-    Transform Net1Transform;
-    Transform Net2Transform;
+    Transform _net1Transform;
+    Transform _net2Transform;
 
     public Vector3 NetPos;
     public float Maginude;
 
-    private float Zone3pt = 7f;
+    private float _zone3pt = 7f;
     public bool isZone3pt;
 
-    private bool SetIK;
+    private bool _setIK;
 
-    private Coroutine BallOnAir;
-    public Coroutine C_ChekBallHigh;
+    private Coroutine C_BallOnAir;
+    private Coroutine C_ChekBallHigh;
+    private Coroutine C_ChangeForceOffset;
 
     public bool BallCorrectHigh;
 
-    private bool BallOnParket;
-
-    private float ForceOffset = 0;
-    private Coroutine C_ChangeForceOffset;
+    private bool _ballOnParket;
+    private float _forceOffset = 0;
 
     public Vector3 StartToFlyPosition;
 
-    private PointCam PointCamScript;
+    private PointCam _pointCamScript;
 
     private Vector3 _lastPosition;
     private Vector3 _lastRotation;
 
     void Awake()
     {
-        networkScript = FindObjectOfType<Network>();
-        PointCamScript = GameObject.FindObjectOfType<PointCam>();
+        _networkScript = FindObjectOfType<Network>();
+        _pointCamScript = GameObject.FindObjectOfType<PointCam>();
 
-        CameraScript = GameObject.Find("Main Camera").GetComponent<CameraRaycast>();
-        GUIScript = GameObject.Find("Canvas").GetComponent<GUI>();
-        Net1Transform = GameObject.Find("net").transform;
-        Net2Transform = GameObject.Find("net (1)").transform;
-        //GameRulesScript = GameObject.Find("CANDYSHOP").GetComponent<NetworkGameRules>();
-        ArcadeScript = GameObject.FindObjectOfType<Arcade>();
+        _cameraScript = GameObject.Find("Main Camera").GetComponent<CameraRaycast>();
+        _guiScript = GameObject.Find("Canvas").GetComponent<GUI>();
+        _net1Transform = GameObject.Find("net").transform;
+        _net2Transform = GameObject.Find("net (1)").transform;
 
-        BouncesSource = GetComponent<AudioSource>();
-        BallRigidBody = GetComponent<Rigidbody>();
+        _bouncesSource = GetComponent<AudioSource>();
+        _ballRigidBody = GetComponent<Rigidbody>();
 
-        MeshRenderer = GetComponent<MeshRenderer>();
-        StandartMaterial = MeshRenderer.material;
+        _meshRenderer = GetComponent<MeshRenderer>();
+        StandartMaterial = _meshRenderer.material;
 
-        BallTransform = transform;
-        ControllerTransform = GameObject.Find("PlayerController").transform;
+        _ballTransform = transform;
+        _controllerTransform = GameObject.Find("PlayerController").transform;
 
-        //GameObject.FindObjectOfType<NetworkManager>().OnBallInit();
-        //GameObject.FindObjectOfType<PointCam>().OnBallInit();
         GameObject.FindObjectOfType<ScoreTrigger>().OnBallInit();
     }
 
@@ -92,37 +87,35 @@ public class BallLogic : MonoBehaviour
         Vector3 ControllerPos = new Vector3();
         PlayerTransform ballTransformData = new PlayerTransform();
 
-        if(ControllerTransform != null) ControllerPos = new Vector3(ControllerTransform.position.x, 0, ControllerTransform.position.z);
+        if(_controllerTransform != null)
+            ControllerPos = new Vector3(_controllerTransform.position.x, 0, _controllerTransform.position.z);
         else ControllerPos = Vector3.zero;
 
         Maginude = (NetPos - ControllerPos).magnitude;
+
         if(CameraRaycast.IsBoard1)
-        NetPos = new Vector3(Net1Transform.position.x, 0, Net1Transform.position.z);
+            NetPos = new Vector3(_net1Transform.position.x, 0, _net1Transform.position.z);
         else if(CameraRaycast.IsBoard2)
-        NetPos = new Vector3(Net2Transform.position.x, 0, Net2Transform.position.z);
+            NetPos = new Vector3(_net2Transform.position.x, 0, _net2Transform.position.z);
 
-        if(Maginude >= Zone3pt)
-        {
+        if(Maginude >= _zone3pt)
             isZone3pt = true;
-        }
         else
-        {
             isZone3pt = false;
-        }
 
-        if (IsGrabed)
+        if(IsGrabed)
         {
-            Vector3 BallRotation = new Vector3(ControllerTransform.rotation.eulerAngles.x, Camera.main.transform.rotation.eulerAngles.y + 90, ControllerTransform.rotation.eulerAngles.z);
+            Vector3 BallRotation = new Vector3(_controllerTransform.rotation.eulerAngles.x, Camera.main.transform.rotation.eulerAngles.y + 90, _controllerTransform.rotation.eulerAngles.z);
 
-            BallTransform.position = Vector3.Lerp(BallTransform.position, CameraRaycast.CameraTransform.position + (CameraRaycast.CameraTransform.forward * 0.5f), 20 * Time.deltaTime);
-            BallTransform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(BallRotation), 20 * Time.deltaTime);
+            _ballTransform.position = Vector3.Lerp(_ballTransform.position, CameraRaycast.CameraTransform.position + (CameraRaycast.CameraTransform.forward * 0.5f), 20 * Time.deltaTime);
+            _ballTransform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(BallRotation), 20 * Time.deltaTime);
 
             if(Network.inRoom)
             {
-                if(_lastPosition != BallTransform.position && _lastRotation != BallTransform.rotation.eulerAngles)
+                if(_lastPosition != _ballTransform.position && _lastRotation != _ballTransform.rotation.eulerAngles)
                 {
-                    var ballPosition = BallTransform.position;
-                    var ballRotation = BallTransform.rotation.eulerAngles;
+                    var ballPosition = _ballTransform.position;
+                    var ballRotation = _ballTransform.rotation.eulerAngles;
 
                     ballTransformData.X = ballPosition.x;
                     ballTransformData.Y = ballPosition.y;
@@ -132,10 +125,10 @@ public class BallLogic : MonoBehaviour
                     ballTransformData.RotY = ballRotation.y;
                     ballTransformData.RotZ = ballRotation.z;
 
-                    networkScript.SendServerData("ServerOnPlayerMoving", ballTransformData);
+                    _networkScript.SendServerData("ServerOnPlayerMoving", ballTransformData);
 
-                    _lastPosition = BallTransform.position;
-                    _lastRotation = BallTransform.rotation.eulerAngles;
+                    _lastPosition = _ballTransform.position;
+                    _lastRotation = _ballTransform.rotation.eulerAngles;
                 }
             }
         }
@@ -144,36 +137,23 @@ public class BallLogic : MonoBehaviour
     public void PhysicEnable()
     {
         Force throwForceData = new Force();
-        Vector3 throwPosition = BallTransform.position;
-        Vector3 throwRotation = BallTransform.rotation.eulerAngles;
+        Vector3 throwPosition = _ballTransform.position;
+        Vector3 throwRotation = _ballTransform.rotation.eulerAngles;
 
         ParketHitCount = 0;
         StartToFlyPosition = new Vector3(transform.position.x, 0, transform.position.z);
-        PointCamScript.OnBallThrow(transform.name);
+        _pointCamScript.OnBallThrow(transform.name);
 
         if(C_ChekBallHigh == null)
-        {
-            C_ChekBallHigh = StartCoroutine(ChekBallHigh());
-        }
+            C_ChekBallHigh = StartCoroutine(ChekHigh());
         else
         {
             StopCoroutine(C_ChekBallHigh);
             C_ChekBallHigh = null;
         }
 
-        // if(GameRulesScript != null && GameRulesScript.isGame)
-        // {
-        //     OnAir = true;
-        //     if(GameRulesScript.is3pt && !isZone3pt)
-        //     {
-        //         GUIScript.ShowPopUpMessage("This point will not be counted", Color.red, 2);
-        //     }
-        // }
-
-        if(CameraScript.AbleToShowPointCam)
-        {
-            GUIScript.SetActivePointCam(true, transform);
-        }
+        if(_cameraScript.AbleToShowPointCam)
+            _guiScript.SetActivePointCam(true, transform);
 
         if(C_ChangeForceOffset != null)
         {
@@ -184,38 +164,38 @@ public class BallLogic : MonoBehaviour
 
 
 
-        MeshRenderer.material = StandartMaterial;
+        _meshRenderer.material = StandartMaterial;
 
-        if(SetIK)
+        if(_setIK)
         {
-            if(BallOnAir == null)
-                BallOnAir = StartCoroutine(WaitingBallOnAir());
+            if(C_BallOnAir == null)
+                C_BallOnAir = StartCoroutine(WaitingBallOnAir());
             else
             {
-                StopCoroutine(BallOnAir);
-                BallOnAir = StartCoroutine(WaitingBallOnAir());
+                StopCoroutine(C_BallOnAir);
+                C_BallOnAir = StartCoroutine(WaitingBallOnAir());
             }
 
-            BallRigidBody.isKinematic = false;
-            BallRigidBody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-            BallRigidBody.detectCollisions = true;
-            SetIK = false;
+            _ballRigidBody.isKinematic = false;
+            _ballRigidBody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            _ballRigidBody.detectCollisions = true;
+            _setIK = false;
         }
 
         IsGrabed = false;
 
         Vector3 Force = new Vector3();
 
-        if(SetForceReady)
+        if(_setForceReady)
         {
-            Force = (CameraScript.ShootPoint.position - BallTransform.position) * (ForceConst + ForceOffset);
+            Force = (_cameraScript.ShootPoint.position - _ballTransform.position) * (ForceConst + _forceOffset);
             var torque = -Camera.main.transform.right * Random.Range(0.2f, 1);
 
-            ForceOffset = 0;
-            BallRigidBody.AddForce(Force);
+            _forceOffset = 0;
+            _ballRigidBody.AddForce(Force);
 
-            SetForceReady = false;
-            BallRigidBody.AddTorque(torque);
+            _setForceReady = false;
+            _ballRigidBody.AddTorque(torque);
 
             if(Network.inRoom)
             {
@@ -235,14 +215,14 @@ public class BallLogic : MonoBehaviour
                 throwForceData.torqueY = torque.y;
                 throwForceData.torqueZ = torque.z;
 
-                networkScript.SendServerData("ServerOnBallThrowning", throwForceData);
+                _networkScript.SendServerData("ServerOnBallThrowning", throwForceData);
             }
         }
     }
 
     public void PhysicDisable()
     {
-        PointCamScript.OnBallGrab(transform);
+        _pointCamScript.OnBallGrab(transform);
 
         if(C_ChekBallHigh != null)
         {
@@ -250,20 +230,20 @@ public class BallLogic : MonoBehaviour
             C_ChekBallHigh = null;
         }
 
-        BallOnParket = false;
+        _ballOnParket = false;
         BallCorrectHigh = false;
 
-        GUIScript.SetActivePointCam(false, null);
+        _guiScript.SetActivePointCam(false, null);
 
-        MeshRenderer.material = TransparentMaterial;
+        _meshRenderer.material = TransparentMaterial;
 
-        BallRigidBody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-        BallRigidBody.isKinematic = true;
-        SetForceReady = true;
-        BallRigidBody.detectCollisions = false;
+        _ballRigidBody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+        _ballRigidBody.isKinematic = true;
+        _setForceReady = true;
+        _ballRigidBody.detectCollisions = false;
         IsGrabed = true;
 
-        SetIK = true;
+        _setIK = true;
 
         CameraRaycast.CurrentBall = transform.name;
     }
@@ -272,39 +252,27 @@ public class BallLogic : MonoBehaviour
     {
         if(collision.transform.tag == "Parket")
         {
-            CameraScript.AbleToShowPointCam = false;
+            _cameraScript.AbleToShowPointCam = false;
             GameObject.FindObjectOfType<PointCam>().OnBallThrow(this.transform.name);
 
             ParketHitCount++;
             if(ParketHitCount == 1)
             {
-                if(ArcadeScript.ArcadeMode)
+                if(C_BallOnAir != null)
                 {
-                    ArcadeScript.OnBallCollisionWithParket();
+                    StopCoroutine(C_BallOnAir);
+                    C_BallOnAir = null;
                 }
 
-                if(BallOnAir != null)
-                {
-                    StopCoroutine(BallOnAir);
-                    BallOnAir = null;
-                }
-
-                BallOnParket = true;
-
-                // if(GameRulesScript != null && (GameRulesScript.isGame == true && OnAir == true))
-                // {
-                //     var HitPoint = collision.contacts[0];
-                //     // NetworkManager.SendShootResult(PlayerController.myID, itsPoint);
-                //     if(itsPoint == false) GameRulesScript.SetMarkerVisable(new Vector3(HitPoint.point.x, 0, HitPoint.point.z));
-                // }
+                _ballOnParket = true;
             }
 
         }
 
         if (collision.relativeVelocity.magnitude > 0.1f)
         {
-            BouncesSource.clip = BouncesSound[Random.Range(0, BouncesSound.Count)];
-            BouncesSource.Play();
+            _bouncesSource.clip = BouncesSound[Random.Range(0, BouncesSound.Count)];
+            _bouncesSource.Play();
         }
     }
 
@@ -312,24 +280,16 @@ public class BallLogic : MonoBehaviour
     {
         var CameraRotation = CameraRaycast.CameraTransform.localRotation;
 
-        BallRigidBody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-        BallRigidBody.isKinematic = true;
+        _ballRigidBody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+        _ballRigidBody.isKinematic = true;
 
-        Vector3 target = Net1Transform.position - PlayerController.ControllerTransform.position;
+        Vector3 target = _net1Transform.position - PlayerController.ControllerTransform.position;
         CameraRotation = Quaternion.LookRotation(target);
 
         PlayerController.ControllerTransform.rotation = Quaternion.Euler(new Vector3(0, CameraRotation.eulerAngles.y, 0));
         CameraRaycast.CameraTransform.localRotation = Quaternion.Euler(new Vector3(CameraRotation.eulerAngles.x, 0, CameraRotation.eulerAngles.z));
 
-        BallTransform.position = CameraRaycast.CameraTransform.position + (CameraRaycast.CameraTransform.forward * 0.9f);
-
-        if(ArcadeScript.ArcadeMode == false)
-        {
-            BallRigidBody.isKinematic = false;
-            BallRigidBody.collisionDetectionMode = CollisionDetectionMode.Continuous;
-            BallRigidBody.detectCollisions = true;
-            //BallRigidBody.AddForce(0, -0.01f, 0);
-        }
+        _ballTransform.position = CameraRaycast.CameraTransform.position + (CameraRaycast.CameraTransform.forward * 0.9f);
     }
 
     public void SetForceOffset(bool _isStart)
@@ -350,8 +310,8 @@ public class BallLogic : MonoBehaviour
                 StopCoroutine(C_ChangeForceOffset);
                 C_ChangeForceOffset = null;
             }
-            MeshRenderer.material = TransparentMaterial;
-            ForceOffset = 0;
+            _meshRenderer.material = TransparentMaterial;
+            _forceOffset = 0;
         }
     }
 
@@ -359,25 +319,34 @@ public class BallLogic : MonoBehaviour
     {
         int count = 0;
 
-        while(BallOnParket == false)
+        while(_ballOnParket == false)
         {
             yield return new WaitForSeconds(1);
             count++;
             if(count == 10)
             {
-                BallRigidBody.AddForce(new Vector3(2, 2, 0), ForceMode.Impulse);
+                _ballRigidBody.AddForce(new Vector3(2, 2, 0), ForceMode.Impulse);
                 break;
             }
         }
         yield break;
     }
 
-    public IEnumerator ChekBallHigh()
+    public void StopCheckBallHight()
+    {
+        if(C_ChekBallHigh != null)
+        {
+            StopCoroutine(C_ChekBallHigh);
+            C_ChekBallHigh = null;
+        }
+    }
+
+    public IEnumerator ChekHigh()
     {
         while(true)
         {
             yield return null;
-            if(BallTransform.position.y >= 2.8f)
+            if(_ballTransform.position.y >= 2.8f)
             {
                 BallCorrectHigh = true;
                 break;
@@ -411,32 +380,32 @@ public class BallLogic : MonoBehaviour
         yield return null;
         while(true)
         {
-            Color CurrentColor = MeshRenderer.material.GetColor("Color_e7a44bfbee1a44c9aa58b1516c7eb71b");
+            Color CurrentColor = _meshRenderer.material.GetColor("Color_e7a44bfbee1a44c9aa58b1516c7eb71b");
 
             if(!LowLevelLimit)
             {
                 CurrentColor = Color.Lerp(CurrentColor, Color.red, RandSpeed * Time.deltaTime);
-                ForceOffset = Mathf.Clamp(Mathf.Lerp(ForceOffset, ForceOffsetMax, RandSpeed * Time.deltaTime), 0, ForceOffsetMax);
+                _forceOffset = Mathf.Clamp(Mathf.Lerp(_forceOffset, ForceOffsetMax, RandSpeed * Time.deltaTime), 0, ForceOffsetMax);
 
                 if(CurrentColor.r >= 0.95f)
                 {
-                    ForceOffset = 2;
+                    _forceOffset = 2;
                     LowLevelLimit = true;
                 }
             }
             else
             {
                 CurrentColor = Color.Lerp(CurrentColor, Color.green, RandSpeed * Time.deltaTime);
-                ForceOffset = Mathf.Clamp(Mathf.Lerp(ForceOffset, 0, RandSpeed * Time.deltaTime), 0, ForceOffsetMax);
+                _forceOffset = Mathf.Clamp(Mathf.Lerp(_forceOffset, 0, RandSpeed * Time.deltaTime), 0, ForceOffsetMax);
 
                 if(CurrentColor.g >= 0.9f)
                 {
-                    ForceOffset = 0;
+                    _forceOffset = 0;
                     LowLevelLimit = false;
                 }
             }
 
-            MeshRenderer.material.SetColor("Color_e7a44bfbee1a44c9aa58b1516c7eb71b", CurrentColor);
+            _meshRenderer.material.SetColor("Color_e7a44bfbee1a44c9aa58b1516c7eb71b", CurrentColor);
 
             yield return null;
         }

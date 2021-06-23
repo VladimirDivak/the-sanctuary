@@ -4,6 +4,11 @@ using System.Linq;
 using TheSanctuary;
 using UnityEngine;
 
+//  данный класс представляет собой логику спавнера объектов  на площадке
+//  и удаления их во время сетевых событий
+//
+//  скрипт написан недавно, по этому класс "слишком много на себя берёт"
+
 public class ObjectSpawner : MonoBehaviour
 {
     [SerializeField]
@@ -84,9 +89,6 @@ public class ObjectSpawner : MonoBehaviour
 
     private void SpawnNetworkPlayer(string playerSessionID, PersonalData playerData, bool playerReadyStatus)
     {
-        Debug.Log(playerData.baseColor);
-        Debug.Log(playerData.linesColor);
-
         var newBall = Instantiate(NetworkBall, new Vector3(0, 1, 0), Quaternion.identity);
         newBall.GetComponent<NetworkBall>().SetNetworkBallData(playerSessionID, playerData, playerReadyStatus);
 

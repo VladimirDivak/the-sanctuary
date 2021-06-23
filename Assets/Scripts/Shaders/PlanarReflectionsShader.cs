@@ -2,22 +2,32 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+//  класс написан для того, чтобы управлять симметричной
+//  камерой, которая создаёт эффект отражений в реальном
+//  времени на поверхности паркета
+
 public class PlanarReflectionsShader : MonoBehaviour
 {
     [SerializeField]
-    public RenderTexture _reflectionTexture;
+    public RenderTexture ReflectionTexture;
     private Camera _mainCamera;
-    // Start is called before the first frame update
+
     void Start()
     {
-        _reflectionTexture.height = Screen.height / 4;
-        _reflectionTexture.width = Screen.width / 4;
+        ReflectionTexture.height = Screen.height / 4;
+        ReflectionTexture.width = Screen.width / 4;
         
         _mainCamera = Camera.main;
     }
 
     void Update()
     {
+        //  по моему мнению, здесь нужно всё-таки использовать Lerp,
+        //  а лучше вообще менять вращение и положение камеры на ряду
+        //  с основной
+        // 
+        //  оставлю как есть, потому что ошибки - это не плохо :)
+
         Vector3 CameraPosition = _mainCamera.transform.localPosition;
         Vector3 CameraRotation = _mainCamera.transform.localRotation.eulerAngles;
 

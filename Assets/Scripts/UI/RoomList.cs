@@ -3,6 +3,7 @@ using TheSanctuary;
 using UnityEngine;
 using TMPro;
 
+//  логика поведения списка игровых комнат на сервере
 public class RoomList : MonoBehaviour
 {
     private protected GameObject _noActiveRooms;

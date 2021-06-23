@@ -1,7 +1,8 @@
 using UnityEngine;
-using TMPro;
 using System;
 
+//  описание строки состояния игровой комнаты
+//  в общем списке комнат
 public class RoomStateLine : MonoBehaviour
 {
     [SerializeField]

@@ -1,6 +1,13 @@
 ﻿using System.Collections;
 using UnityEngine;
 
+//  данный класс создан для описания логики перемещения игрока
+//
+//  до сих пор ищу решение по наиболее грамотному написанию
+//  movement-компонента для игрока, т.к. описанный мною
+//  вариант даёт рывки при вращении и перемещении,
+//  что было заметно также и в VR-версии проекта
+
 public class PlayerController : MonoBehaviour
 {
     public static Transform ControllerTransform;
@@ -37,6 +44,14 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator Movement()
     {
+
+        //  здесь присутствует дублирование кода, знаю...
+        //  пока что просто оставлю как есть, но лучше, конечно,
+        //  менять в этом цикле только знак вектора _net
+        //
+        //  и вообще я не уверен, что писать всё это внутри куротины
+        //  верное решение, но вариантов было использовано несколько
+        
         while(true)
         {
             if(ControllerTransform.position.x > 0)
@@ -69,9 +84,6 @@ public class PlayerController : MonoBehaviour
 
         ControllerTransform.rotation = Quaternion.Slerp(ControllerTransform.rotation, Quaternion.Euler(ControllerRotation), _mouseSensitivity * Time.deltaTime);
         _cameraTransform.localRotation = Quaternion.Slerp(_cameraTransform.localRotation, Quaternion.Euler(_cameraYRot, 0, 0), _mouseSensitivity * Time.deltaTime);
-
-        // ControllerTransform.rotation = Quaternion.Euler(ControllerRotation);
-        // _cameraTransform.localRotation = Quaternion.Euler(_cameraYRot, 0, 0);
     }
 
     private void ControllerMoving()
@@ -81,7 +93,6 @@ public class PlayerController : MonoBehaviour
 
         Vector3 TranslateVector = (ControllerTransform.forward * z + ControllerTransform.right * x) * _movingSpeed;
 
-        // Vector3 NewPosition = Vector3.Lerp(ControllerTransform.position, ControllerTransform.position + TranslateVector, 5f * Time.deltaTime);
         Vector3 NewPosition = ControllerTransform.position + TranslateVector * Time.deltaTime;
         ControllerTransform.position = new Vector3(Mathf.Clamp(NewPosition.x, -15.5f, 15.5f), NewPosition.y, Mathf.Clamp(NewPosition.z, -7.5f, 7.5f));
     }

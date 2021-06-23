@@ -1,32 +1,40 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+//  класс описывает поведение элемента UI,
+//  который отображает, чей трек сейчас играет на фоне
+//
+//  проблема кода - все анимации затухания того или иного
+//  элемента UI прописаны вручную для каждого, по
+//  этому одна из главных целей в дальнейшем для UI -
+//  это написание одной-единственной логики для реализации
+//  этого эффекта
+
 public class ArtistNamePanel : MonoBehaviour
 {
-    Text ArtistNameText;
-    Image ArtistNameLogo;
+    Text _artistNameText;
+    Image _artistNameLogo;
     
     Coroutine C_ShowArtistNamePanel;
-    LEDDisplayLogic DisplayLogicScript;
+    LEDDisplayLogic _displayLogicScript;
     
     [SerializeField] public Sprite[] Logos;
 
     void Start()
     {
-        DisplayLogicScript = GameObject.FindObjectOfType<LEDDisplayLogic>();
+        _displayLogicScript = GameObject.FindObjectOfType<LEDDisplayLogic>();
 
-        ArtistNameText = GameObject.Find("ArtistNameText").GetComponent<Text>();
-        var textColor = ArtistNameText.color;
+        _artistNameText = GameObject.Find("ArtistNameText").GetComponent<Text>();
+        var textColor = _artistNameText.color;
         textColor.a = 0;
-        ArtistNameText.color = textColor;
+        _artistNameText.color = textColor;
 
-        ArtistNameLogo = GameObject.Find("ArtistNameImg").GetComponent<Image>();
-        var artistSpriteColor = ArtistNameLogo.color;
+        _artistNameLogo = GameObject.Find("ArtistNameImg").GetComponent<Image>();
+        var artistSpriteColor = _artistNameLogo.color;
         artistSpriteColor.a = 0;
-        ArtistNameLogo.color = artistSpriteColor;
-        ArtistNameLogo.sprite = Logos[0];
+        _artistNameLogo.color = artistSpriteColor;
+        _artistNameLogo.sprite = Logos[0];
     }
 
     public void ShowNewArtistName()
@@ -44,10 +52,10 @@ public class ArtistNamePanel : MonoBehaviour
     {
         yield return null;
 
-        var _artistImage = ArtistNameLogo.GetComponentInChildren<Image>();
+        var _artistImage = _artistNameLogo.GetComponentInChildren<Image>();
         var _artistImageColor = _artistImage.color;
 
-        var _artistTextColor = ArtistNameText.color;
+        var _artistTextColor = _artistNameText.color;
 
         if(_artistImageColor.a != 0 && _artistTextColor.a != 0)
         {
@@ -57,7 +65,7 @@ public class ArtistNamePanel : MonoBehaviour
                 _artistImage.color = _artistImageColor;
 
                 _artistTextColor.a = Mathf.Lerp(_artistTextColor.a, 0, 3 * Time.deltaTime);
-                ArtistNameText.color = _artistTextColor;
+                _artistNameText.color = _artistTextColor;
 
                 yield return null;
             }
@@ -66,7 +74,7 @@ public class ArtistNamePanel : MonoBehaviour
             _artistImage.color = _artistImageColor;
 
             _artistTextColor.a = 0;
-            ArtistNameText.color = _artistTextColor;
+            _artistNameText.color = _artistTextColor;
         }
 
         switch(LEDDisplayLogic.CurrentArtsistName)
@@ -94,7 +102,7 @@ public class ArtistNamePanel : MonoBehaviour
             _artistImage.color = _artistImageColor;
 
             _artistTextColor.a = Mathf.Lerp(_artistTextColor.a, 1, 1.2f * Time.deltaTime);
-            ArtistNameText.color = _artistTextColor;
+            _artistNameText.color = _artistTextColor;
 
             yield return null;
         }
@@ -103,7 +111,7 @@ public class ArtistNamePanel : MonoBehaviour
         _artistImage.color = _artistImageColor;
 
         _artistTextColor.a = 1;
-        ArtistNameText.color = _artistTextColor;
+        _artistNameText.color = _artistTextColor;
 
         yield break;
     }

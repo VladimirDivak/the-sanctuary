@@ -8,12 +8,10 @@ public class ScoreTrigger : MonoBehaviour
 
     private NetworkBall OtherBallScript;
     private BallLogic BallScript;
-    // private NetworkGameRules GameRulesScript;
     private Arcade ArcadeScript;
 
     void Start()
     {
-        //GameRulesScript = GameObject.Find("CANDYSHOP").GetComponent<NetworkGameRules>();
         ArcadeScript = FindObjectOfType<Arcade>();
         NetSound = GetComponent<AudioSource>();
         TriggerTransform = transform;
@@ -31,37 +29,13 @@ public class ScoreTrigger : MonoBehaviour
         if(other.TryGetComponent<BallLogic>(out BallScript))
         {
             BallScript = other.GetComponent<BallLogic>();
-
-            if(BallScript.C_ChekBallHigh != null)
-            {
-                BallScript.StopCoroutine(BallScript.C_ChekBallHigh);
-                BallScript.C_ChekBallHigh = null;
-            }
+            BallScript.StopCheckBallHight();
 
             if(BallScript.BallCorrectHigh == true)
             {
-                // if(!BallScript.itsPoint && GameRulesScript.isGame)
-                // {
-                //     if(GameRulesScript.is3pt)
-                //     {
-                //         if(!BallScript.isZone3pt)
-                //         {
-                //             BallScript.itsPoint = false;
-                //         }
-                //         else
-                //         {
-                //             BallScript.itsPoint = true;
-                //         }
-                //     }
-                //     else
-                //     {
-                //         BallScript.itsPoint = true;
-                //     }
-                // }
                 if(ArcadeScript.ArcadeMode)
-                {
                     ArcadeScript.OnGetScore();
-                }
+
                 NetSound.Play();
             }
         }

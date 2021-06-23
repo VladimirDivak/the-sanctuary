@@ -1,11 +1,18 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
+//  логика работы кнопок главного меню
+//  
+//  кнопки увеличиваются при наведении на них
+//  курсора и уменьшаются после перевода курсора
+//  с их трансформа
+//
+//  при нажатии на кнопку запускается логика затухания
+
 public class MenuButton : MonoBehaviour
 {
-    private UserInterface UI;
+    private UserInterface _ui;
 
     private Vector3 _initPosition;
     private Vector3 _transletePosition;
@@ -22,7 +29,7 @@ public class MenuButton : MonoBehaviour
 
     void Start()
     {
-        UI = GameObject.FindObjectOfType<UserInterface>();
+        _ui = GameObject.FindObjectOfType<UserInterface>();
 
         _rectTransform = transform.GetComponent<RectTransform>();
         _initPosition = _rectTransform.localPosition;
@@ -43,9 +50,9 @@ public class MenuButton : MonoBehaviour
 
     private void OnMouseDown()
     {
-        if(UI.AbleToMouseClick == true)
+        if(_ui.AbleToMouseClick == true)
         {
-            UI.OnUIButtonPressed(name);
+            _ui.OnUIButtonPressed(name);
         }
     }
 

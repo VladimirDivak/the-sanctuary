@@ -4,35 +4,37 @@ using System.Linq;
 using UnityEngine.UI;
 using UnityEngine;
 
+
+//  старый скрипт, описывающтй один из режимов игры
 public class Arcade : MonoBehaviour
 {
-    private GUI GUIScript;
+    private GUI _guiScript;
     // private GamemodeSelector ModeSelector;
-    private BallLogic BallScript;
+    private BallLogic _ballScript;
 
-    private Rigidbody BallRB;
+    private Rigidbody _ballRB;
 
-    private GameObject ArcadeText;
+    private GameObject _arcadeText;
     public GameObject Scoreboard;
-    private GameObject SirenLigts;
+    private GameObject _sirenLigts;
 
     public TextMesh ScoreboardText;
-    private Text ArcadeTextField;
+    private Text _arcadeTextField;
 
-    private int Timer = 3;
-    private int GlobalTimer = 0;
-    private int Scores = 0;
+    private int _timer = 3;
+    private int _globalTimer = 0;
+    private int _scores = 0;
 
-    private Vector3[] ShootingPos = new Vector3[9];
-    private List<Vector3> NewPositions = new List<Vector3>();
+    private Vector3[] _shootingPos = new Vector3[9];
+    private List<Vector3> _newPositions = new List<Vector3>();
 
     private Coroutine C_ArcadeInit;
     private Coroutine C_TimerCounter;
     private Coroutine C_ArcadeEnd;
 
-    private bool IsInit = true;
+    private bool _isInit = true;
 
-    private AudioSource SirenSource;
+    private AudioSource _sirenSource;
 
     [SerializeField] public AudioClip TimerSoundMiddle;
     [SerializeField] public AudioClip TimerSoundHigh;
@@ -42,48 +44,48 @@ public class Arcade : MonoBehaviour
 
     void SetPositionsList()
     {
-        NewPositions = ShootingPos.ToList();
-        for(int x = 0; x < ShootingPos.Length; x++)
+        _newPositions = _shootingPos.ToList();
+        for(int x = 0; x < _shootingPos.Length; x++)
         {
-            if(NewPositions[x].z != 0)
+            if(_newPositions[x].z != 0)
             {
-                NewPositions.Add(new Vector3(NewPositions[x].x, NewPositions[x].y, -NewPositions[x].z));
+                _newPositions.Add(new Vector3(_newPositions[x].x, _newPositions[x].y, -_newPositions[x].z));
             }
         }
     }
 
     void Start()
     {
-        ShootingPos[0] = new Vector3(8.35f, 0, 0);
-        ShootingPos[1] = new Vector3(5.65f, 0, 0);
-        ShootingPos[2] = new Vector3(6.15f, 0, 3.275f);
-        ShootingPos[3] = new Vector3(9.45f, 0, 2.95f);
-        ShootingPos[4] = new Vector3(8.5f, 0, 6.3f);
-        ShootingPos[5] = new Vector3(12.7f, 0, 2.7f);
-        ShootingPos[6] = new Vector3(12.7f, 0, 4.95f);
-        ShootingPos[7] = new Vector3(12.7f, 0, 7.45f);
-        ShootingPos[8] = new Vector3(1.5f, 0, 0);
+        _shootingPos[0] = new Vector3(8.35f, 0, 0);
+        _shootingPos[1] = new Vector3(5.65f, 0, 0);
+        _shootingPos[2] = new Vector3(6.15f, 0, 3.275f);
+        _shootingPos[3] = new Vector3(9.45f, 0, 2.95f);
+        _shootingPos[4] = new Vector3(8.5f, 0, 6.3f);
+        _shootingPos[5] = new Vector3(12.7f, 0, 2.7f);
+        _shootingPos[6] = new Vector3(12.7f, 0, 4.95f);
+        _shootingPos[7] = new Vector3(12.7f, 0, 7.45f);
+        _shootingPos[8] = new Vector3(1.5f, 0, 0);
 
         SetPositionsList();
 
-        GUIScript = FindObjectOfType<GUI>();
+        _guiScript = FindObjectOfType<GUI>();
         // ModeSelector = FindObjectOfType<GamemodeSelector>();
 
-        ArcadeText = GameObject.Find("ArcadeText");
-        ArcadeTextField = ArcadeText.GetComponent<Text>();
-        ArcadeText.SetActive(false);
+        _arcadeText = GameObject.Find("ArcadeText");
+        _arcadeTextField = _arcadeText.GetComponent<Text>();
+        _arcadeText.SetActive(false);
 
-        SirenSource = GameObject.Find("Siren").GetComponent<AudioSource>();
+        _sirenSource = GameObject.Find("Siren").GetComponent<AudioSource>();
 
-        SirenLigts = GameObject.Find("SirenLights");
-        SirenLigts.SetActive(false);
+        _sirenLigts = GameObject.Find("SirenLights");
+        _sirenLigts.SetActive(false);
 
         
     }
 
     public void ArcadeInitialization()
     {
-        BallRB = GameObject.FindObjectOfType<BallLogic>().GetComponent<Rigidbody>();
+        _ballRB = GameObject.FindObjectOfType<BallLogic>().GetComponent<Rigidbody>();
 
         // ModeSelector.HideGamemodeSelector();
         C_ArcadeInit = StartCoroutine(ArcadeInit());
@@ -94,27 +96,27 @@ public class Arcade : MonoBehaviour
 
         }
 
-        for(int x = 0; x < ShootingPos.Length; x++)
+        for(int x = 0; x < _shootingPos.Length; x++)
         {
-            ShootingPos[x].y = -0.08000016f;
+            _shootingPos[x].y = -0.08000016f;
         }
 
-        BallScript = FindObjectOfType<BallLogic>();
-        IsInit = true;
+        _ballScript = FindObjectOfType<BallLogic>();
+        _isInit = true;
     }
 
     public void AfterFade()
     {
-        if(IsInit == true)
+        if(_isInit == true)
         {
-            IsInit = false;
+            _isInit = false;
             if(C_ArcadeInit != null)
             {
                 StopCoroutine(C_ArcadeInit);
                 C_ArcadeInit = null;
             }
             ArcadeMode = true;
-            ArcadeText.SetActive(true);
+            _arcadeText.SetActive(true);
             GameManager.SetMovingControl = false;
 
             if(C_TimerCounter != null)
@@ -124,27 +126,27 @@ public class Arcade : MonoBehaviour
             }
             C_TimerCounter = StartCoroutine(TimerCounter());
 
-            PlayerController.ControllerTransform.position = ShootingPos[0];
+            PlayerController.ControllerTransform.position = _shootingPos[0];
         }
         else
         {
-            if(NewPositions.Count == 0)
+            if(_newPositions.Count == 0)
             {
                 SetPositionsList();
             }
 
-            var RandomInt = Random.Range(0, NewPositions.Count);
-            PlayerController.ControllerTransform.position = NewPositions[RandomInt];
-            NewPositions.Remove(NewPositions[RandomInt]);
+            var RandomInt = Random.Range(0, _newPositions.Count);
+            PlayerController.ControllerTransform.position = _newPositions[RandomInt];
+            _newPositions.Remove(_newPositions[RandomInt]);
         }
 
-        BallScript.BallSetArcadePosition();
+        _ballScript.BallSetArcadePosition();
     }
 
     public void OnGetScore()
     {
-        Scores++;
-        Timer += 5; 
+        _scores++;
+        _timer += 5; 
     }
 
     public void OnBallCollisionWithParket()
@@ -155,7 +157,7 @@ public class Arcade : MonoBehaviour
     private IEnumerator ArcadeInit()
     {
         yield return null;
-        GUIScript.ShowPopUpMessage("arcade mode will be started after 5 seconds...", Color.green, PopUpMessageType.Message);
+        _guiScript.ShowPopUpMessage("arcade mode will be started after 5 seconds...", Color.green, PopUpMessageType.Message);
 
         yield return new WaitForSecondsRealtime(5);
 
@@ -164,26 +166,26 @@ public class Arcade : MonoBehaviour
 
     private IEnumerator ArcadeEnd()
     {
-        ArcadeTextField.text = $"{GlobalTimer} SECOND(S)\n{Scores} SCORE(S)";
-        ScoreboardText.text = $"{GlobalTimer} SECOND(S)\n{Scores} SCORE(S)";
+        _arcadeTextField.text = $"{_globalTimer} SECOND(S)\n{_scores} SCORE(S)";
+        ScoreboardText.text = $"{_globalTimer} SECOND(S)\n{_scores} SCORE(S)";
 
         ArcadeMode = false;
-        Timer = 3;
-        Scores = 0;
-        GlobalTimer = 0;
+        _timer = 3;
+        _scores = 0;
+        _globalTimer = 0;
 
         // ModeSelector.ShowGamemodeSelector();
         GameManager.SetMovingControl = true;
 
-        BallRB.isKinematic = false;
-        BallRB.collisionDetectionMode = CollisionDetectionMode.Continuous;
-        BallRB.detectCollisions = true;
+        _ballRB.isKinematic = false;
+        _ballRB.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        _ballRB.detectCollisions = true;
 
         yield return new WaitForSeconds(5);
 
-        SirenLigts.SetActive(false);
+        _sirenLigts.SetActive(false);
 
-        ArcadeText.SetActive(false);
+        _arcadeText.SetActive(false);
         Scoreboard.SetActive(false);
         ScoreboardText.text = string.Empty;
 
@@ -199,52 +201,52 @@ public class Arcade : MonoBehaviour
     private IEnumerator TimerCounter()
     {
         yield return null;
-        BallRB.detectCollisions = false;
-        while(Timer != 0)
+        _ballRB.detectCollisions = false;
+        while(_timer != 0)
         {
-            if(SirenSource.clip.name != TimerSoundMiddle.name) SirenSource.clip = TimerSoundMiddle;
-            SirenSource.Play();
+            if(_sirenSource.clip.name != TimerSoundMiddle.name) _sirenSource.clip = TimerSoundMiddle;
+            _sirenSource.Play();
 
-            ArcadeTextField.text = Timer.ToString();
+            _arcadeTextField.text = _timer.ToString();
             yield return new WaitForSeconds(1);
-            Timer--;
+            _timer--;
             yield return null;
         }
 
-        SirenSource.clip = TimerSoundHigh;
-        SirenSource.Play();
+        _sirenSource.clip = TimerSoundHigh;
+        _sirenSource.Play();
 
-        Timer = 5;
-        BallRB.detectCollisions = true;
+        _timer = 5;
+        _ballRB.detectCollisions = true;
         Scoreboard.SetActive(true);
 
         while(true)
         {
             yield return null;
 
-            if(Timer <= 3 && Timer >= 1)
+            if(_timer <= 3 && _timer >= 1)
             {
-                SirenSource.clip = TimerSoundMiddle;
-                SirenSource.Play();
+                _sirenSource.clip = TimerSoundMiddle;
+                _sirenSource.Play();
             }
 
-            if(Timer == 0)
+            if(_timer == 0)
             {
-                SirenLigts.SetActive(true);
-                SirenSource.clip = EndgameSound;
-                SirenSource.Play();
+                _sirenLigts.SetActive(true);
+                _sirenSource.clip = EndgameSound;
+                _sirenSource.Play();
 
                 C_ArcadeEnd = StartCoroutine(ArcadeEnd());
                 break;
             }
 
-            ScoreboardText.text = $"{GlobalTimer} SECOND(S)\n{Scores} SCORE(S)";
-            ArcadeTextField.text = Timer.ToString();
+            ScoreboardText.text = $"{_globalTimer} SECOND(S)\n{_scores} SCORE(S)";
+            _arcadeTextField.text = _timer.ToString();
 
             yield return new  WaitForSeconds(1);
 
-            GlobalTimer++;
-            Timer--;
+            _globalTimer++;
+            _timer--;
         }
     }
 }

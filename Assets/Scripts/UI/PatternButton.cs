@@ -1,8 +1,10 @@
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+
+//  данный скрипт описывает работу кнопки
+//  выбора текстуры узора на мяче в
+//  меню кастомизации
 
 public class PatternButton : MonoBehaviour
 {

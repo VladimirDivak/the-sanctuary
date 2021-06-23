@@ -4,9 +4,19 @@ using UnityEngine;
 using TheSanctuary;
 using System.Linq;
 
+//  данный класс описывает поведение баскетбольного мяча других игроков в игре
+//
+//  в идеале стоит не делить логику поведения мяча клиента и мячей
+//  сетевых игроков, а создать общий интерфейс, чтобы при попадании
+//  мяча в кольцо триггер не пытался получить компонент скрипта того
+//  или иного типа мяча
+//
+//  данный скрипт был описан мной практически в начале работы над этим
+//  проектом, по этому здесь имеется несколько спорных решений, которые
+//  в дальнейшем я намерен изменить
+
 public class NetworkBall : MonoBehaviour
 {
-    [SerializeField]
     private List<AudioClip> BouncesSound = new List<AudioClip>();
 
     public string PlayerID;
@@ -23,16 +33,16 @@ public class NetworkBall : MonoBehaviour
     public bool OnAir;
     public bool itsPoint;
 
-    private bool Grabing;
+    private bool _grabing;
 
-    private Vector3 LastPos;
-    private Quaternion LastRot;
+    private Vector3 _lastPos;
+    private Quaternion _lastRot;
 
-    private Coroutine BallOnAir;
-    private Coroutine BallGrabing;
+    private Coroutine C_BallOnAir;
+    private Coroutine C_BallGrabing;
     public Coroutine C_ChekBallHigh;
 
-    private bool BallOnParket;
+    private bool _ballOnParket;
     public bool BallCorrectHigh;
 
     private void Start()
@@ -47,6 +57,8 @@ public class NetworkBall : MonoBehaviour
         FindObjectOfType<GameManager>().ClothColliders.Add(new ClothSphereColliderPair(GetComponent<SphereCollider>(), GetComponent<SphereCollider>()));
     }
 
+    //  метод вызывается в ObjectSpawner'е и инициализирует полученные с сервера
+    //  данные: ID текущей сессии, персональные данные клиента, его статус готовности к игре
     public void SetNetworkBallData(string id, PersonalData data, bool readyStatus)
     {
         PlayerID = id;
@@ -59,28 +71,31 @@ public class NetworkBall : MonoBehaviour
 
         Material material = GetComponent<Renderer>().sharedMaterial;
 
-        Debug.Log(_playerData.baseColor);
-        Debug.Log(_playerData.linesColor);
+        //  Debug.Log(_playerData.baseColor);
+        //  Debug.Log(_playerData.linesColor);
 
         Debug.Log(ColorUtility.TryParseHtmlString(_playerData.baseColor, out baseColor));
         Debug.Log(ColorUtility.TryParseHtmlString(_playerData.linesColor, out linesColor));
 
-        material.SetColor(BallCustomize._baseColorID, baseColor);
-        material.SetColor(BallCustomize._linesColorID, linesColor);
+        material.SetColor(BallCustomize.baseColorID, baseColor);
+        material.SetColor(BallCustomize.linesColorID, linesColor);
 
         if(_playerData.usePattern)
         {
-            material.SetTexture(BallCustomize._patternTextureID,
-            BallCustomize._patternsStatic.First(x => x.name == _playerData.patternName));
+            material.SetTexture(BallCustomize.patternTextureID,
+            BallCustomize.PatternsStatic.First(x => x.name == _playerData.patternName));
         }
     }
 
+    //  метод вызывается в Network и запускает цепочку методов, которые описывают
+    //  логику перемещения мяча
     private void OnBallMoving(string playerSessionId, PlayerTransform playerTransform)
     {
         if(playerSessionId != PlayerID) return;
         DisablePhysic(playerTransform);
     }
 
+    //  метод вызывается в Network, запускает цепочку методов при броске игроком мяча
     private void OnBallThrowing(string playerSessionId, Force throwForce)
     {
         if(playerSessionId != PlayerID) return;
@@ -89,17 +104,17 @@ public class NetworkBall : MonoBehaviour
 
     public void DisablePhysic(PlayerTransform ballTransform)
     {
-        LastPos = new Vector3(ballTransform.X,
+        _lastPos = new Vector3(ballTransform.X,
             ballTransform.Y,
             ballTransform.Z);
 
-        LastRot = Quaternion.Euler(new Vector3(ballTransform.RotX,
+        _lastRot = Quaternion.Euler(new Vector3(ballTransform.RotX,
             ballTransform.RotY,
             ballTransform.RotZ));
 
-        if(Grabing == false)
+        if(_grabing == false)
         {
-            Grabing = true;
+            _grabing = true;
             OnAir = false;
 
             InitGrabing();
@@ -108,15 +123,13 @@ public class NetworkBall : MonoBehaviour
             NetworkBallRB.isKinematic = true;
             NetworkBallRB.detectCollisions = false;
 
-            if(BallGrabing == null)
+            if(C_BallGrabing != null)
             {
-                BallGrabing = StartCoroutine(BallMoving());
+                StopCoroutine(C_BallGrabing);
+                C_BallGrabing = null;
+
             }
-            else
-            {
-                StopCoroutine(BallGrabing);
-                BallGrabing = StartCoroutine(BallMoving());
-            }
+            C_BallGrabing = StartCoroutine(BallMoving());
         }
     }
 
@@ -140,18 +153,18 @@ public class NetworkBall : MonoBehaviour
             C_ChekBallHigh = null;
         }
 
-        StopCoroutine(BallGrabing);
+        StopCoroutine(C_BallGrabing);
 
         OnAir = true;
         
-        if(BallOnAir == null)
+        if(C_BallOnAir == null)
         {
-            BallOnAir = StartCoroutine(WaitingBallOnAir());
+            C_BallOnAir = StartCoroutine(WaitingBallOnAir());
         }
         else
         {
-            StopCoroutine(BallOnAir);
-            BallOnAir = StartCoroutine(WaitingBallOnAir());
+            StopCoroutine(C_BallOnAir);
+            C_BallOnAir = StartCoroutine(WaitingBallOnAir());
         }
 
         NetworkBallRB.isKinematic = false;
@@ -162,7 +175,7 @@ public class NetworkBall : MonoBehaviour
         NetworkBallRB.AddForce(force);
         NetworkBallRB.AddTorque(torque);
 
-        Grabing = false;
+        _grabing = false;
     }
 
     private void InitGrabing()
@@ -173,7 +186,7 @@ public class NetworkBall : MonoBehaviour
             C_ChekBallHigh = null;
         }
 
-        BallOnParket = false;
+        _ballOnParket = false;
         ParketHitCount = 0;
         BallCorrectHigh = false;
     }
@@ -188,14 +201,14 @@ public class NetworkBall : MonoBehaviour
 
         if(collision.transform.tag == "Parket")
         {
-            BallOnParket = true;
+            _ballOnParket = true;
 
             ParketHitCount++;
 
-            if(BallOnAir != null)
+            if(C_BallOnAir != null)
             {
-                StopCoroutine(BallOnAir);
-                BallOnAir = null;
+                StopCoroutine(C_BallOnAir);
+                C_BallOnAir = null;
             }
             
             if(ParketHitCount == 1)
@@ -213,7 +226,7 @@ public class NetworkBall : MonoBehaviour
     {
         int count = 0;
 
-        while(BallOnParket == false)
+        while(_ballOnParket == false)
         {
             yield return new WaitForSeconds(1);
             count++;
@@ -228,13 +241,13 @@ public class NetworkBall : MonoBehaviour
 
     private IEnumerator BallMoving()
     {
-        NetworkBallTransform.position = LastPos;
-        NetworkBallTransform.rotation = LastRot;
+        NetworkBallTransform.position = _lastPos;
+        NetworkBallTransform.rotation = _lastRot;
 
         while(true)
         {
-            NetworkBallTransform.position = Vector3.Lerp(NetworkBallTransform.position, LastPos, 0.5f);
-            NetworkBallTransform.rotation = Quaternion.Lerp(NetworkBallTransform.rotation, LastRot, 0.5f);
+            NetworkBallTransform.position = Vector3.Lerp(NetworkBallTransform.position, _lastPos, 0.5f);
+            NetworkBallTransform.rotation = Quaternion.Lerp(NetworkBallTransform.rotation, _lastRot, 0.5f);
             yield return null;
         }
     }

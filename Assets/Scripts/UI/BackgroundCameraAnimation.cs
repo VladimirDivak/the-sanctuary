@@ -1,6 +1,9 @@
 using System.Collections;
 using UnityEngine;
 
+//  данный скрипт описывает перемещение камеры, изображение
+//  которой служит фоном для большого дисплея в зале
+
 [RequireComponent(typeof(Camera))]
 public class BackgroundCameraAnimation : MonoBehaviour
 {
