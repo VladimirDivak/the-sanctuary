@@ -1,58 +1,61 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
+
+
+//  логика поведения при попадании мяча в кольцо.
+//  явный минус - разделение логики локального мяча
+//  и мячей сетевых игроков
+
 
 public class ScoreTrigger : MonoBehaviour
 {
-    private Transform TriggerTransform;
-    private AudioSource NetSound;
+    private Transform _triggerTransform;
+    private AudioSource _netSound;
 
-    private NetworkBall OtherBallScript;
-    private BallLogic BallScript;
-    private Arcade ArcadeScript;
+    private NetworkBall _otherBallScript;
+    private BallLogic _ballScript;
+    private Arcade _arcadeScript;
 
     void Start()
     {
-        ArcadeScript = FindObjectOfType<Arcade>();
-        NetSound = GetComponent<AudioSource>();
-        TriggerTransform = transform;
+        _arcadeScript = FindObjectOfType<Arcade>();
+        _netSound = GetComponent<AudioSource>();
+        _triggerTransform = transform;
     }
 
-    public void OnBallInit()
-    {
-        BallScript = GameObject.FindObjectOfType<BallLogic>();
-    }
+    public void OnBallInit() =>
+        _ballScript = GameObject.FindObjectOfType<BallLogic>();
 
     private void OnTriggerEnter(Collider other)
     {
-        OtherBallScript = null;
+        _otherBallScript = null;
         
-        if(other.TryGetComponent<BallLogic>(out BallScript))
+        if(other.TryGetComponent<BallLogic>(out _ballScript))
         {
-            BallScript = other.GetComponent<BallLogic>();
-            BallScript.StopCheckBallHight();
+            _ballScript = other.GetComponent<BallLogic>();
+            _ballScript.StopCheckBallHight();
 
-            if(BallScript.BallCorrectHigh == true)
+            if(_ballScript.BallCorrectHigh == true)
             {
-                if(ArcadeScript.ArcadeMode)
-                    ArcadeScript.OnGetScore();
+                if(_arcadeScript.ArcadeMode)
+                    _arcadeScript.OnGetScore();
 
-                NetSound.Play();
+                _netSound.Play();
             }
         }
         else
         {
-            OtherBallScript = other.GetComponent<NetworkBall>();
+            _otherBallScript = other.GetComponent<NetworkBall>();
 
-            if(OtherBallScript.C_ChekBallHigh != null)
+            if(_otherBallScript.C_ChekBallHigh != null)
             {
-                OtherBallScript.StopCoroutine(OtherBallScript.C_ChekBallHigh);
-                OtherBallScript.C_ChekBallHigh = null;
+                _otherBallScript.StopCoroutine(_otherBallScript.C_ChekBallHigh);
+                _otherBallScript.C_ChekBallHigh = null;
             }
             
-            if(OtherBallScript.BallCorrectHigh == true)
+            if(_otherBallScript.BallCorrectHigh == true)
             {
-                OtherBallScript.itsPoint = true;
-                NetSound.Play();
+                _otherBallScript.itsPoint = true;
+                _netSound.Play();
             }
         }
     }
