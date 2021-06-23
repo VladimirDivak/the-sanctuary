@@ -17,7 +17,6 @@ public class ScoreTrigger : MonoBehaviour
 
     void Start()
     {
-        _arcadeScript = FindObjectOfType<Arcade>();
         _netSound = GetComponent<AudioSource>();
         _triggerTransform = transform;
     }
