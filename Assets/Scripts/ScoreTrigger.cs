@@ -13,7 +13,6 @@ public class ScoreTrigger : MonoBehaviour
 
     private NetworkBall _otherBallScript;
     private BallLogic _ballScript;
-    private Arcade _arcadeScript;
 
     void Start()
     {
@@ -34,12 +33,7 @@ public class ScoreTrigger : MonoBehaviour
             _ballScript.StopCheckBallHight();
 
             if(_ballScript.BallCorrectHigh == true)
-            {
-                if(_arcadeScript.ArcadeMode)
-                    _arcadeScript.OnGetScore();
-
                 _netSound.Play();
-            }
         }
         else
         {
