@@ -86,10 +86,13 @@ public class PointCam : MonoBehaviour
             RotationOffset *= -1;
         }
 
-        Angle = Vector3.Angle(NetAngle, NetAngle - _ballScript.StartToFlyPosition) * AngleModule;
-        _pointCamTransform.rotation = Quaternion.Euler(new Vector3(30, Angle + RotationOffset, 0));
+        if(_ballScript != null)
+        {
+            Angle = Vector3.Angle(NetAngle, NetAngle - _ballScript.StartToFlyPosition) * AngleModule;
+            _pointCamTransform.rotation = Quaternion.Euler(new Vector3(30, Angle + RotationOffset, 0));
 
-        _pointCamTransform.position = _cameraDirection * _constOffset.magnitude + _ballTransform.position - new Vector3(0, _constOffset.y, 0);
+            _pointCamTransform.position = _cameraDirection * _constOffset.magnitude + _ballTransform.position - new Vector3(0, _constOffset.y, 0);
+        }
     }
 
     public void OnBallThrow(string _newBall)

@@ -10,22 +10,39 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    [SerializeField]
+    public Camera ReflectionCamera;
+    [SerializeField]
+    public RenderTexture PlanarReflectionTexture;
+
     public static Transform ControllerTransform;
     public static float NetDistance;
 
     private Transform _cameraTransform;
+    private Transform _reflectionCameraTransform;
+    private Vector3 _cameraForward;
+    private Vector3 _cameraRight;
 
-    private float _mouseSensitivity = 60f;
+    private float _mouseSensitivity = 10f;
 
     private float _cameraYRot;
-    private float _movingSpeed = 3f;
+    private float _cameraXRot;
+    private float _movingSpeed = 0.18f;
+    private float _lerpConst = 25;
 
     private Vector3 _net = new Vector3(12.779f, 0, 0);
     private Coroutine _movement;
 
+    void Awake()
+    {
+        PlanarReflectionTexture.height = Screen.height;
+        PlanarReflectionTexture.width = Screen.width;
+    }
+
     private void Start()
     {
         _cameraTransform = Camera.main.transform;
+        _reflectionCameraTransform = ReflectionCamera.transform;
 
         Vector3 StartPosition = new Vector3(8.35f, 0, 0);
         Quaternion StartRotation = Quaternion.Euler(new Vector3(0, -270, 0));
@@ -54,14 +71,14 @@ public class PlayerController : MonoBehaviour
         
         while(true)
         {
-            if(ControllerTransform.position.x > 0)
-            {
-                NetDistance = (_net - new Vector3(ControllerTransform.position.x, 0, ControllerTransform.position.z)).magnitude;
-            }
-            else
-            {
-                NetDistance = (-_net - new Vector3(ControllerTransform.position.x, 0, ControllerTransform.position.z)).magnitude;
-            }
+            _cameraForward = new Vector3(_cameraTransform.forward.x, 0, _cameraTransform.forward.z);
+            _cameraRight = new Vector3(_cameraTransform.right.x, 0, _cameraTransform.right.z);
+
+
+            if(ControllerTransform.position.x < 0)
+                _net *= -1;
+            
+            NetDistance = (_net - new Vector3(ControllerTransform.position.x, 0, ControllerTransform.position.z)).magnitude;
 
             ControllerRotating();
             ControllerMoving();
@@ -72,18 +89,19 @@ public class PlayerController : MonoBehaviour
 
     private void ControllerRotating()
     {
-        var ControllerRotation = ControllerTransform.rotation.eulerAngles;
+        float mouseX = Input.GetAxis("Mouse X") * _mouseSensitivity;
+        float mouseY = Input.GetAxis("Mouse Y") * _mouseSensitivity;
 
-        float mouseX = Input.GetAxis("Mouse X");
-        float mouseY = Input.GetAxis("Mouse Y");
+        _cameraXRot -= mouseY;
+        _cameraXRot = Mathf.Clamp(_cameraXRot, -90f, 90f);
 
-        _cameraYRot -= mouseY;
-        _cameraYRot = Mathf.Clamp(_cameraYRot, -90f, 90f);
+        _cameraYRot += mouseX;
 
-        ControllerRotation.y += mouseX;
+        var cameraRotation = new Vector3(_cameraXRot, _cameraYRot, 0);
+        var reflectionCameraRotation = new Vector3(-cameraRotation.x, cameraRotation.y, -cameraRotation.z);
 
-        ControllerTransform.rotation = Quaternion.Slerp(ControllerTransform.rotation, Quaternion.Euler(ControllerRotation), _mouseSensitivity * Time.deltaTime);
-        _cameraTransform.localRotation = Quaternion.Slerp(_cameraTransform.localRotation, Quaternion.Euler(_cameraYRot, 0, 0), _mouseSensitivity * Time.deltaTime);
+        _cameraTransform.localRotation = Quaternion.Slerp(_cameraTransform.localRotation, Quaternion.Euler(cameraRotation), _lerpConst * Time.deltaTime);
+        _reflectionCameraTransform.localRotation = Quaternion.Slerp(_reflectionCameraTransform.localRotation, Quaternion.Euler(reflectionCameraRotation), _lerpConst * Time.deltaTime);
     }
 
     private void ControllerMoving()
@@ -91,9 +109,12 @@ public class PlayerController : MonoBehaviour
         float x = Input.GetAxis("Horizontal");
         float z = Input.GetAxis("Vertical");
 
-        Vector3 TranslateVector = (ControllerTransform.forward * z + ControllerTransform.right * x) * _movingSpeed;
+        Vector3 TranslateVector = (_cameraForward * z + _cameraRight * x) * _movingSpeed;
 
-        Vector3 NewPosition = ControllerTransform.position + TranslateVector * Time.deltaTime;
-        ControllerTransform.position = new Vector3(Mathf.Clamp(NewPosition.x, -15.5f, 15.5f), NewPosition.y, Mathf.Clamp(NewPosition.z, -7.5f, 7.5f));
+        Vector3 newPosition = ControllerTransform.position + TranslateVector;
+        newPosition = new Vector3(Mathf.Clamp(newPosition.x, -15.5f, 15.5f), newPosition.y, Mathf.Clamp(newPosition.z, -7.5f, 7.5f));
+        ControllerTransform.position = Vector3.Lerp(ControllerTransform.position, newPosition, _lerpConst * Time.deltaTime);
+
+        _reflectionCameraTransform.localPosition = new Vector3(0, -_cameraTransform.localPosition.y, 0);
     }
 }

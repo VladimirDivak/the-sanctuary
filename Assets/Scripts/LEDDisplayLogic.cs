@@ -16,14 +16,14 @@ public class LEDDisplayLogic : MonoBehaviour
     private bool _ableToChangeText = true;
     private string[] _trackName;
     private float _trackTime;
-    private AudioPlayerLogic _audioPlayerScript;
+    private AudioPlayer _audioPlayerScript;
 
     private Coroutine _setTrackTime;
     public static string CurrentArtsistName;
 
     void Start()
     {
-        _audioPlayerScript = FindObjectOfType<AudioPlayerLogic>();
+        _audioPlayerScript = FindObjectOfType<AudioPlayer>();
         _nextButton = GameObject.Find("LED_next");
         _previewButton = GameObject.Find("LED_preview");
         Mesh = this.GetComponent<TextMesh>();
@@ -128,7 +128,7 @@ public class LEDDisplayLogic : MonoBehaviour
         {
             yield return null;
 
-            if((min == 0 && sec == 1) || _audioPlayerScript.Source.isPlaying == false)
+            if((min == 0 && sec == 1) || _audioPlayerScript.GetAudioSource().isPlaying == false)
             {
                 break;
             }

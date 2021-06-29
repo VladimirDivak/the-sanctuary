@@ -23,6 +23,12 @@ public class RegPanel : MonoBehaviour
 
     private event Action<string> OnFadeOutEvent;
 
+    private void Awake()
+    {
+        _network = FindObjectOfType<Network>();
+        _UI = FindObjectOfType<UserInterface>();
+    }
+
     private void Start()
     {
         SetChildrenTransformList(transform);
@@ -32,9 +38,6 @@ public class RegPanel : MonoBehaviour
         }
 
         OnFadeOutEvent += OnFadeOut;
-
-        _network = FindObjectOfType<Network>();
-        _UI = FindObjectOfType<UserInterface>();
         
         Color RedColor = Color.red;
         RedColor.a = 0;
@@ -301,30 +304,8 @@ public class RegPanel : MonoBehaviour
         
         if(ErrorTextField.name.Contains("_Login"))
         {
-            if(Network.accountData.login != null)
-            {
-                foreach(var ball in GameObject.FindGameObjectsWithTag("Ball"))
-                {
-                    var material = ball.GetComponent<Renderer>().material;
-
-                    Color baseColor;
-                    Color linesColor;
-
-                    ColorUtility.TryParseHtmlString(Network.accountData.baseColor, out baseColor);
-                    ColorUtility.TryParseHtmlString(Network.accountData.linesColor, out linesColor);
-
-                    material.SetColor(BallCustomize.baseColorID, baseColor);
-                    material.SetColor(BallCustomize.linesColorID, linesColor);
-
-                    if(Network.accountData.usePattern)
-                    {
-                        material.SetTexture(BallCustomize.patternTextureID,
-                        BallCustomize.PatternsStatic.Where(x => x.name == Network.accountData.patternName).ToList().FirstOrDefault());
-                    }
-                }
-
+            if(Network.accountData.login != null)  
                 FindObjectOfType<GUI>().SetFade(5f);
-            }
             else
             {
                 if(C_ErrorText != null) StopCoroutine(C_ErrorText);

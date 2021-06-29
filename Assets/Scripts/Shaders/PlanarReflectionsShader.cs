@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 //  класс написан для того, чтобы управлять симметричной
@@ -13,11 +11,10 @@ public class PlanarReflectionsShader : MonoBehaviour
     private Camera _mainCamera;
 
     void Start()
-    {
-        ReflectionTexture.height = Screen.height / 4;
-        ReflectionTexture.width = Screen.width / 4;
-        
+    {        
         _mainCamera = Camera.main;
+        ReflectionTexture.height = Screen.height;
+        ReflectionTexture.width = Screen.width;
     }
 
     void Update()

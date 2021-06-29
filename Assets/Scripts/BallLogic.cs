@@ -15,6 +15,7 @@ using TheSanctuary;
 //  
 //  coroutine C_ChangeForceOffset - задаёт плавное изменение погрешности
 //  броска, т.к. без этого мяч практически всегда попадает в кольцо
+
 public class BallLogic : MonoBehaviour
 {
     [SerializeField]
@@ -22,7 +23,7 @@ public class BallLogic : MonoBehaviour
     [SerializeField]
     Material TransparentMaterial;
 
-    public Material StandartMaterial;
+    private Material _standartMaterial;
     MeshRenderer _meshRenderer;
 
     private Transform _ballTransform;
@@ -66,12 +67,14 @@ public class BallLogic : MonoBehaviour
     public Vector3 StartToFlyPosition;
 
     private PointCam _pointCamScript;
+    private BallCustomize _ballCustomize;
 
     private Vector3 _lastPosition;
     private Vector3 _lastRotation;
 
     void Awake()
     {
+        _ballCustomize = FindObjectOfType<BallCustomize>();
         _networkScript = FindObjectOfType<Network>();
         _pointCamScript = GameObject.FindObjectOfType<PointCam>();
 
@@ -84,7 +87,7 @@ public class BallLogic : MonoBehaviour
         _ballRigidBody = GetComponent<Rigidbody>();
 
         _meshRenderer = GetComponent<MeshRenderer>();
-        StandartMaterial = _meshRenderer.material;
+        _standartMaterial = _meshRenderer.material;
 
         _ballTransform = transform;
         _controllerTransform = GameObject.Find("PlayerController").transform;
@@ -136,13 +139,15 @@ public class BallLogic : MonoBehaviour
                     ballTransformData.RotZ = ballRotation.z;
 
                     _networkScript.SendServerData("ServerOnPlayerMoving", ballTransformData);
-
-                    _lastPosition = _ballTransform.position;
-                    _lastRotation = _ballTransform.rotation.eulerAngles;
                 }
             }
+
+            _lastPosition = _ballTransform.position;
+            _lastRotation = _ballTransform.rotation.eulerAngles;
         }
     }
+
+    public void SetBallOutlook(Material newMaterial) => _standartMaterial = newMaterial;
 
     public void PhysicEnable()
     {
@@ -174,7 +179,7 @@ public class BallLogic : MonoBehaviour
 
 
 
-        _meshRenderer.material = StandartMaterial;
+        _meshRenderer.material = _standartMaterial;
 
         if(_setIK)
         {

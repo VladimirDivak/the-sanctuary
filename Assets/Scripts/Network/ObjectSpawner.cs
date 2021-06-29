@@ -12,33 +12,64 @@ using UnityEngine;
 public class ObjectSpawner : MonoBehaviour
 {
     [SerializeField]
+    public GameObject MyBall;
+    [SerializeField]
+    public Material MyBallMaterial;
+    [SerializeField]
     public GameObject NetworkBall;
+
+    [SerializeField]
+    public Texture2D[] Patterns;
 
     public static string RoomCreatorID;
     private List<GameObject> _networkBallArray = new List<GameObject>();
+    private GUI _gui;
 
     void Start()
     {
+        _gui = FindObjectOfType<GUI>();
+
         Network.OnGetRoomDataEvent += OnGetRoomData;
         Network.OnRoomConnectionEvent += OnRoomConnection;
         Network.OnRoomDisconnectionEvent += OnRoomDisconnection;
+    }
+
+    public void SetBallMaterial(Outlook outlookData)
+    {
+        Color baseColor;
+        Color linesColor;
+
+        ColorUtility.TryParseHtmlString(outlookData.BaseColor, out baseColor);
+        ColorUtility.TryParseHtmlString(outlookData.LinesColor, out linesColor);
+
+        MyBallMaterial.SetColor(BallCustomize.baseColorID, baseColor);
+        MyBallMaterial.SetColor(BallCustomize.linesColorID, linesColor);
+
+        if(outlookData.UsePattern)
+        {
+            var patternTexture = Patterns.ToList().Find(x => x.name == outlookData.PatternName);
+            MyBallMaterial.SetInt(BallCustomize.usePatternID, 1);
+            MyBallMaterial.SetTexture(BallCustomize.patternTextureID, patternTexture);
+        }
+        else MyBallMaterial.SetInt(BallCustomize.usePatternID, 0);
     }
 
     private void OnRoomDisconnection(string playerSessionId)
     {
         try
         {
-            var guiScript = FindObjectOfType<GUI>();
             var disconnectPlayerBall = _networkBallArray.Find(x => x.name == playerSessionId);
             var networkBallScript = disconnectPlayerBall.GetComponent<NetworkBall>();
 
-            guiScript.ShowPopUpMessage($"player {networkBallScript.PlayerName} leave this room", Color.yellow, PopUpMessageType.Info);
+            _gui.ShowPopUpMessage($"player {networkBallScript.PlayerName} leave this room", Color.yellow, PopUpMessageType.Info);
             if(playerSessionId == RoomCreatorID)
             {
-                guiScript.ShowPopUpMessage($"room closed", Color.red, PopUpMessageType.Error);
+                _gui.ShowPopUpMessage($"room closed", Color.red, PopUpMessageType.Error);
                 Network.GameMode = null;
                 Network.inRoom = false;
             }
+            
+            _gui.RemovePlayerNickname(networkBallScript.PlayerName);
             
             _networkBallArray.Remove(disconnectPlayerBall);
             Destroy(disconnectPlayerBall);
@@ -53,8 +84,8 @@ public class ObjectSpawner : MonoBehaviour
     {
         try
         {
-            SpawnNetworkPlayer(playerSessionId, playerAccount, false);
-            FindObjectOfType<GUI>().ShowPopUpMessage($"player {playerAccount.login} connected to room", Color.yellow, PopUpMessageType.Info);
+            SpawnNetworkPlayerBall(playerSessionId, playerAccount, false);
+            _gui.ShowPopUpMessage($"player {playerAccount.login} connected to room", Color.yellow, PopUpMessageType.Info);
         }
         catch(Exception ex)
         {
@@ -73,11 +104,11 @@ public class ObjectSpawner : MonoBehaviour
 
             for(int i = 0; i < playersAccounts.Count; i++)
             {
-                SpawnNetworkPlayer(playersSessionIDs[i], playersAccounts[i], readyStatusList[i]);
+                SpawnNetworkPlayerBall(playersSessionIDs[i], playersAccounts[i], readyStatusList[i]);
             }
 
             // скорее всего, этот код нужно выполнить по событию OnFadeOut в GameMode
-            FindObjectOfType<GUI>().ShowPopUpMessage($"you have joined the {playersAccounts.First().login}'s room",
+            _gui.ShowPopUpMessage($"you have joined the {playersAccounts.First().login}'s room",
                 Color.yellow,
                 PopUpMessageType.Info);
         }
@@ -87,11 +118,26 @@ public class ObjectSpawner : MonoBehaviour
         }
     }
 
-    private void SpawnNetworkPlayer(string playerSessionID, PersonalData playerData, bool playerReadyStatus)
+    private void SpawnNetworkPlayerBall(string playerSessionID, PersonalData playerData, bool playerReadyStatus)
     {
-        var newBall = Instantiate(NetworkBall, new Vector3(0, 1, 0), Quaternion.identity);
+        
+        var newBall = Instantiate(NetworkBall, new Vector3(0, 1.5f, 0), Quaternion.identity);
         newBall.GetComponent<NetworkBall>().SetNetworkBallData(playerSessionID, playerData, playerReadyStatus);
 
+        _gui.AddPlayerNickname(playerData.login);
+
         _networkBallArray.Add(newBall);
+    }
+
+    public void SpawnBall(Account myData, Vector3 position)
+    {
+        var newMyBall = Instantiate(MyBall, position, Quaternion.identity);
+        newMyBall.GetComponent<BallLogic>().SetBallOutlook(MyBallMaterial);
+
+        if(FindObjectsOfType<BallLogic>().Length <= 1)
+        {
+            var backgroundBall = GameObject.Find("Background Ball");
+            backgroundBall.GetComponent<Renderer>().material = MyBallMaterial;
+        }
     }
 }

@@ -46,7 +46,7 @@ public class UserInterface : MonoBehaviour
     private List<GameObject> _uiButtonsList = new List<GameObject>();
     private List<GameObject> _uiSlidesList = new List<GameObject>();
 
-    private AudioPlayerLogic _audioPlayer;
+    private AudioPlayer _audioPlayer;
 
     private GUI _guiScript;
     private RoomList _roomListScript;
@@ -63,7 +63,7 @@ public class UserInterface : MonoBehaviour
         BallCustomizePanel.SetActive(false);
 
         _guiScript = FindObjectOfType<GUI>();
-        _audioPlayer = FindObjectOfType<AudioPlayerLogic>();
+        _audioPlayer = FindObjectOfType<AudioPlayer>();
         _roomListScript = FindObjectOfType<RoomList>();
 
         AbleToMouseClick = true;
@@ -252,7 +252,8 @@ public class UserInterface : MonoBehaviour
     {
         float LerpProc = 0;
         float BeginValue = _depthOfField.gaussianEnd.value;
-        yield return null;
+
+        _depthOfField.active = true;
 
         while(LerpProc < 1)
         {
@@ -263,6 +264,9 @@ public class UserInterface : MonoBehaviour
         }
 
         _depthOfField.gaussianEnd.value = Value;
+        if(Value > BeginValue) _depthOfField.active = false;
+
+        yield break;
     }
 
     private IEnumerator SaturationChanging(float Value, float LerpTime)

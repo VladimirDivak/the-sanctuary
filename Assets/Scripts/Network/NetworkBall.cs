@@ -17,10 +17,11 @@ using System.Linq;
 
 public class NetworkBall : MonoBehaviour
 {
-    private List<AudioClip> BouncesSound = new List<AudioClip>();
+    [SerializeField]
+    public List<AudioClip> BouncesSound = new List<AudioClip>();
 
     public string PlayerID;
-    private PersonalData _playerData = new PersonalData();
+    private Player _playerData;
 
     public string PlayerName => _playerData.login;
 
@@ -45,8 +46,14 @@ public class NetworkBall : MonoBehaviour
     private bool _ballOnParket;
     public bool BallCorrectHigh;
 
+    private GUI _gui;
+    private Camera _mainCamera;
+
     private void Start()
     {
+        _gui = FindObjectOfType<GUI>();
+        _mainCamera = Camera.main;
+
         NetworkBallTransform = transform;
         _bouncesSource = GetComponent<AudioSource>();
         NetworkBallRB = GetComponent<Rigidbody>();
@@ -57,6 +64,20 @@ public class NetworkBall : MonoBehaviour
         FindObjectOfType<GameManager>().ClothColliders.Add(new ClothSphereColliderPair(GetComponent<SphereCollider>(), GetComponent<SphereCollider>()));
     }
 
+    private void Update()
+    {
+        if(_mainCamera.isActiveAndEnabled)
+        {
+            var nicknamePosition = new Vector3(NetworkBallTransform.position.x,
+                NetworkBallTransform.position.y + 0.3f,
+                NetworkBallTransform.position.z);
+
+            _gui.SetPlayerNicknamePosition(_playerData.login,
+                _mainCamera.WorldToScreenPoint(nicknamePosition));
+            Debug.Log(_mainCamera.transform.TransformPoint(NetworkBallTransform.position - _mainCamera.transform.position));
+        }
+    }
+
     //  метод вызывается в ObjectSpawner'е и инициализирует полученные с сервера
     //  данные: ID текущей сессии, персональные данные клиента, его статус готовности к игре
     public void SetNetworkBallData(string id, PersonalData data, bool readyStatus)
@@ -64,27 +85,28 @@ public class NetworkBall : MonoBehaviour
         PlayerID = id;
         transform.name = PlayerID;
 
-        _playerData = data;
+        _playerData = new Player(data);
 
         Color baseColor;
         Color linesColor;
 
         Material material = GetComponent<Renderer>().sharedMaterial;
 
-        //  Debug.Log(_playerData.baseColor);
-        //  Debug.Log(_playerData.linesColor);
-
-        Debug.Log(ColorUtility.TryParseHtmlString(_playerData.baseColor, out baseColor));
-        Debug.Log(ColorUtility.TryParseHtmlString(_playerData.linesColor, out linesColor));
+        ColorUtility.TryParseHtmlString(_playerData.BallOutlook.BaseColor, out baseColor);
+        ColorUtility.TryParseHtmlString(_playerData.BallOutlook.LinesColor, out linesColor);
 
         material.SetColor(BallCustomize.baseColorID, baseColor);
         material.SetColor(BallCustomize.linesColorID, linesColor);
 
-        if(_playerData.usePattern)
+        if(_playerData.BallOutlook.UsePattern)
         {
-            material.SetTexture(BallCustomize.patternTextureID,
-            BallCustomize.PatternsStatic.First(x => x.name == _playerData.patternName));
+            var patternTexture = FindObjectOfType<ObjectSpawner>().Patterns.First(x => x.name.Contains(_playerData.BallOutlook.PatternName));
+            material.SetTexture(BallCustomize.patternTextureID, patternTexture);
+            material.SetInt(BallCustomize.usePatternID, 1);
         }
+        else material.SetInt(BallCustomize.usePatternID, 0);
+
+        material.SetInt(BallCustomize.useNetworkFresnelID, 1);
     }
 
     //  метод вызывается в Network и запускает цепочку методов, которые описывают

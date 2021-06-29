@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using TMPro;
-using TheSanctuary;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
+using TheSanctuary;
+using Newtonsoft.Json;
 
 //  да, знаю, что такие слова в названии класса, как
 //  "Logic", "Master", "Manager" и т.д. - дурной тон,
@@ -20,21 +21,19 @@ using System;
 //  и с большой вероятностью скрип сильно изменится в ближайшее время
 
 [RequireComponent(typeof(AudioSource))]
-public class AudioPlayerLogic : MonoBehaviour
+public class AudioPlayer : MonoBehaviour
 {
     private Dictionary<float, AudioClip> _tracksDict = new Dictionary<float, AudioClip>();
-    [SerializeField]
-    public AudioSource Source;
+    private AudioSource _source;
     private LEDDisplayLogic _ledScript;
     private List<float> _tracksLenght;
-    private List<AudioClip> _tracks = new List<AudioClip>();
-
+    [SerializeField]
+    private List<AudioClip> Tracks = new List<AudioClip>();
     [SerializeField]
     public GameObject MainMenuBall;
-
     private float[] _clipSampleData;
     [SerializeField]
-    public float UpdateStep = 0.005f;
+    public float UpdateStep = 0.01f;
     [SerializeField]
     public int SampleRate = 1024;
     private float _currentUpdateTime = 0f;
@@ -48,8 +47,8 @@ public class AudioPlayerLogic : MonoBehaviour
 
     [SerializeField]
     private GameObject BackgroundPanel;
-    
-    private List<Texture2D> _trackCovers = new List<Texture2D>();
+    [SerializeField]
+    private List<Texture2D> TrackCovers = new List<Texture2D>();
 
     [SerializeField]
     public GameObject NetworkData;
@@ -60,69 +59,82 @@ public class AudioPlayerLogic : MonoBehaviour
     [SerializeField]
     public Material[] NetworksMaterial;
 
-    List<Artist> _beatmakersList = new List<Artist>();
+    private List<Artist> _artists = new List<Artist>();
+
+    public AudioSource GetAudioSource()
+    {
+        return _source;
+    }
+
+    void SetArtistData()
+    {
+        string path = "Assets/DownloadData/ArtistData";
+        if(!Directory.Exists(path)) Directory.CreateDirectory(path);
+
+        string[] files = Directory.GetFiles(path);
+        if(files.Length != 0)
+        {
+            foreach(var item in files)
+            {
+                if(!item.Contains(".meta"))
+                {
+                    using(FileStream fs = File.OpenRead(item))
+                    {
+                        byte[] data = new byte[fs.Length];
+                        fs.Read(data, 0, data.Length);
+                        string jsonData = System.Text.Encoding.UTF8.GetString(data);
+
+                        var artistData = JsonConvert.DeserializeObject<Artist>(jsonData);
+                        _artists.Add(artistData);
+                    }
+                }
+            }
+        }
+    }
 
     void Start()
     {
-        // List<string> ArtistNames = new List<string>();
-
-        // foreach(var track in Tracks)
-        // {
-        //     var ArtistName = track.name.Split('-').FirstOrDefault();
-        //     if(ArtistNames.Contains(ArtistName)) continue;
-
-        //     Dictionary<float, string> ArtistTracks = new Dictionary<float, string>();
-
-        //     foreach(var trackData in Tracks)
-        //     {
-        //         if(trackData.name.Split('-').FirstOrDefault() == ArtistName)
-        //         {
-        //             ArtistTracks.Add(trackData.length, trackData.name.Split('-').Last());
-        //             ArtistNames.Add(ArtistName);
-        //         }
-        //     }
-
-        //     switch(ArtistName)
-        //     {
-        //         case "drake":
-        //             _beatmakersList.Add(new Artist(ArtistName, ArtistTracks, "drake@gmail.com", "@champagnepappi", "/drake", "/drake", "@Drake"));
-        //             break;
-        //         case "goldman":
-        //             _beatmakersList.Add(new Artist(ArtistName, ArtistTracks, "muradgoldman@gmail.com", "@muradgoldman", string.Empty, string.Empty, string.Empty, "@muradgoldman"));
-        //             break;
-        //         case "clvne":
-        //             _beatmakersList.Add(new Artist(ArtistName, ArtistTracks, "divak.design@gmail.com", "@divak.design", string.Empty, string.Empty, "@divak.design", "@divak.design"));
-        //             break;
-        //     }
-        // }
-
-        // if(Directory.Exists("Assets/DownloadBundles"))
-        // {
-        //     Debug.Log("файлов нет... отправляю запрос");
-        //     FindObjectOfType<Network>().SendServerData("ServerGetTracksData");
-        // }
-
-        _clipSampleData = new float[SampleRate];
+        SetArtistData();
 
         _ledScript = GameObject.Find("LEDText").GetComponent<LEDDisplayLogic>();
-        Source = this.GetComponent<AudioSource>();
+        _source = GetComponent<AudioSource>();
+
+        foreach(var item in Tracks)
+        {
+            _tracksDict.Add(item.length, item);
+        }
+
+        _tracksLenght = new List<float>(_tracksDict.Keys);
+
+        _source.clip = _tracksDict[_tracksLenght[UnityEngine.Random.Range(0, _tracksLenght.Count)]];
+        _ledScript.SetLEDTrackName(_source.clip.name, _source.clip.length);
+        _source.Play();
+
+        BallVizualization(true);
+
+        _trackNameText = GetComponentsInChildren<TMP_Text>().First(x => x.name.Contains("Track"));
+        _artistNameText = GetComponentsInChildren<TMP_Text>().First(x => x.name.Contains("Artist"));
+
+        SetTrackData(_source.clip.name);
+
+        _clipSampleData = new float[SampleRate];
     }
 
     public void OnNextTrack()
     {
         BallVizualization(false);
 
-        Source.Stop();
+        _source.Stop();
 
-        if(_tracksLenght.IndexOf(Source.clip.length) != _tracksLenght.Count - 1)
-        Source.clip = _tracksDict[_tracksLenght[_tracksLenght.IndexOf(Source.clip.length)+1]];
+        if(_tracksLenght.IndexOf(_source.clip.length) != _tracksLenght.Count - 1)
+        _source.clip = _tracksDict[_tracksLenght[_tracksLenght.IndexOf(_source.clip.length)+1]];
         else
-        Source.clip = _tracksDict[_tracksLenght[0]];
+        _source.clip = _tracksDict[_tracksLenght[0]];
 
-        _ledScript.SetLEDTrackName(Source.clip.name, Source.clip.length);
-        Source.Play();
+        _ledScript.SetLEDTrackName(_source.clip.name, _source.clip.length);
+        _source.Play();
 
-        SetTrackData(Source.clip.name);
+        SetTrackData(_source.clip.name);
 
         BallVizualization(true);
     }
@@ -131,17 +143,17 @@ public class AudioPlayerLogic : MonoBehaviour
     {
         BallVizualization(false);
 
-        Source.Stop();
+        _source.Stop();
 
-        if(_tracksLenght.IndexOf(Source.clip.length) != 0)
-        Source.clip = _tracksDict[_tracksLenght[_tracksLenght.IndexOf(Source.clip.length)-1]];
+        if(_tracksLenght.IndexOf(_source.clip.length) != 0)
+        _source.clip = _tracksDict[_tracksLenght[_tracksLenght.IndexOf(_source.clip.length)-1]];
         else
-        Source.clip = _tracksDict[_tracksLenght[_tracksLenght.Count - 1]];
+        _source.clip = _tracksDict[_tracksLenght[_tracksLenght.Count - 1]];
 
-        _ledScript.SetLEDTrackName(Source.clip.name, Source.clip.length);
-        Source.Play();
+        _ledScript.SetLEDTrackName(_source.clip.name, _source.clip.length);
+        _source.Play();
 
-        SetTrackData(Source.clip.name);
+        SetTrackData(_source.clip.name);
 
         BallVizualization(true);
     }
@@ -171,7 +183,7 @@ public class AudioPlayerLogic : MonoBehaviour
             if(_currentUpdateTime >= UpdateStep)
             {
                 _currentUpdateTime = 0;
-                Source.clip.GetData(_clipSampleData, Source.timeSamples);
+                _source.clip.GetData(_clipSampleData, _source.timeSamples);
                 ClipLoudness = 0;
 
                 foreach(var sample in _clipSampleData)
@@ -200,56 +212,40 @@ public class AudioPlayerLogic : MonoBehaviour
         }
         
         Material BGMaterial = BackgroundPanel.GetComponent<MeshRenderer>().material;
-        Texture2D Cover = _trackCovers.First(x => x.name.Contains(Text[0].ToLower()));
-        if(Cover == null) Cover = _trackCovers.LastOrDefault();
+        Texture2D Cover = TrackCovers.FirstOrDefault(x => x.name.Contains(Text[0]));
 
-        float Yoffset = 0.3f;
+        float Yoffset = 0.6f;
 
         BGMaterial.SetTexture("Texture2D_4d1c136f48194b7eb5ae69894dd308e7", Cover);
 
         _artistNameText.text = Text[0];
         _trackNameText.text = Text[1];
 
-        foreach(var network in _beatmakersList.First(x => x.GetArtistName() == Text[0]).GetArtistContacts())
+        var artistData = _artists.Find(x => _source.clip.name.Contains(x.Name));
+
+        GameObject NetworkDataObject;
+        Material DataObjectMaterial;
+        Dictionary<string, string> keyWord = new Dictionary<string, string>();
+
+        if(artistData.Mail != null) keyWord.Add("Mail", artistData.Mail);
+        if(artistData.Instagram != null) keyWord.Add("Instagram", artistData.Instagram);
+        if(artistData.SoundCloud != null) keyWord.Add("SoundCloud", artistData.SoundCloud);
+        if(artistData.Facebook != null) keyWord.Add("Facebook", artistData.Facebook);
+        if(artistData.Twitter != null) keyWord.Add("Twitter", artistData.Twitter);
+        if(artistData.TikTok != null) keyWord.Add("TikTok", artistData.TikTok);
+
+        foreach(var item in keyWord)
         {
-            GameObject NetworkDataObject;
-            Material DataObjectMaterial;
+            NetworkDataObject = Instantiate(NetworkData, Vector3.zero, Quaternion.Euler(new Vector3(90, 0, 0)));
+            DataObjectMaterial = NetworkDataObject.GetComponentInChildren<MeshRenderer>().material;
+            NetworkDataObject.transform.SetParent(transform);
+            NetworkDataObject.transform.localPosition = new Vector3(0.145f, Yoffset, -0.3f);
 
-            if(network.Value != string.Empty)
-            {
-                NetworkDataObject = Instantiate(NetworkData, Vector3.zero, Quaternion.Euler(new Vector3(90, 0, 0)));
-                DataObjectMaterial = NetworkDataObject.GetComponentInChildren<MeshRenderer>().material;
-                NetworkDataObject.transform.SetParent(transform);
-                NetworkDataObject.transform.localPosition = new Vector3(0.72f, Yoffset, -0.3f);
+            Yoffset -= 0.3f;
 
-                Yoffset -= 0.3f;
-
-                NetworkDataObject.GetComponentInChildren<TMP_Text>().text = network.Value;
-
-                DataObjectMaterial = NetworksMaterial.First(x => x.name.Contains(network.Key));
-
-                NetworkDataObject.GetComponentInChildren<MeshRenderer>().material = DataObjectMaterial;
-            }
-        }
-    }
-
-    //  находится в разработке
-    public void UnpackTracksData(Track[] tracks)
-    {
-        Debug.Log(tracks.Length);
-        try
-        {
-            for(int i = 0; i < tracks.Length; i++)
-            {
-                var bundleData = tracks[i].trackBundleData;
-                File.WriteAllBytes($"Assets/DownloadBundles/{tracks[i].trackAuthor}-{tracks[i].trackName}.unity3d", bundleData);
-            }
-
-            StartCoroutine(DowloadTracksData());
-        }
-        catch(Exception ex)
-        {
-            Debug.LogError(ex);
+            NetworkDataObject.GetComponentInChildren<TMP_Text>().text = item.Value;
+            DataObjectMaterial = NetworksMaterial.First(x => x.name.Contains(item.Key));
+            NetworkDataObject.GetComponentInChildren<MeshRenderer>().material = DataObjectMaterial;
         }
     }
 
@@ -275,29 +271,12 @@ public class AudioPlayerLogic : MonoBehaviour
                         var track = assetRequest.LoadAssetAsync("track.mp3", typeof(AudioClip));
                         var logo = assetRequest.LoadAssetAsync("logo.png", typeof(Texture2D));
 
-                        _tracks.Add(track.asset as AudioClip);
-                        _trackCovers.Add(logo.asset as Texture2D);
+                        Tracks.Add(track.asset as AudioClip);
+                        TrackCovers.Add(logo.asset as Texture2D);
                     }
                 }
             }
 
-            foreach(var item in _tracks)
-            {
-                _tracksDict.Add(item.length, item);
-            }
-
-            _tracksLenght = new List<float>(_tracksDict.Keys);
-
-            Source.clip = _tracksDict[_tracksLenght[UnityEngine.Random.Range(0, _tracksLenght.Count)]];
-            _ledScript.SetLEDTrackName(Source.clip.name, Source.clip.length);
-            Source.Play();
-
-            BallVizualization(true);
-
-            _trackNameText = GetComponentsInChildren<TMP_Text>().First(x => x.name.Contains("Track"));
-            _artistNameText = GetComponentsInChildren<TMP_Text>().First(x => x.name.Contains("Artist"));
-
-            SetTrackData(Source.clip.name);
         }
         catch(Exception ex)
         {

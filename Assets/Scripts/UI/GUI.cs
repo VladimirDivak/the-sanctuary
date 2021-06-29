@@ -2,6 +2,9 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using System.Collections.Generic;
+using System.Linq;
 
 //  скрипт, описывающий логику работы всего (почти),
 //  что связано с игровым инетрфесом
@@ -31,6 +34,11 @@ public class GUI : MonoBehaviour
     public static event Action OnFadeOut;
 
     private Coroutine _fadeRoutine;
+
+    [SerializeField]
+    public TMP_Text PlayerNickname;
+    private static List<TMP_Text> _playersNicknames = new List<TMP_Text>();
+    private Dictionary<string, Vector2> _playnerNicknamesPositions = new Dictionary<string, Vector2>();
 
     [SerializeField]
     public GameObject PopUpPanel;
@@ -97,6 +105,10 @@ public class GUI : MonoBehaviour
     {
         _crosshair.SetActive(itsTrue);
         _artistNamePanel.SetActive(itsTrue);
+        for(int i = 0; i < _playersNicknames.Count; i++)
+        {
+            _playersNicknames[i].gameObject.SetActive(itsTrue);
+        }
     }
 
     public void ShowPopUpMessage(string _message, Color _color, PopUpMessageType _icon)
@@ -255,5 +267,49 @@ public class GUI : MonoBehaviour
     {
         if(_show) _thirdPointLineText.SetActive(true);
         else _thirdPointLineText.SetActive(false);
+    }
+
+    public void AddPlayerNickname(string name)
+    {
+        var data = Instantiate(PlayerNickname, Vector3.zero, Quaternion.identity);
+        data.text = name;
+        data.GetComponent<RectTransform>().SetParent(this.transform);
+
+        _playersNicknames.Add(data);
+        _playnerNicknamesPositions.Add(name, Vector2.zero);
+        if(_playersNicknames.Count == 1)
+        {
+            StartCoroutine(SetNicknamesPositions());
+        }
+    }
+
+    public void RemovePlayerNickname(string name)
+    {
+        var playerNicknameText = _playersNicknames.Find(x => x.text == name);
+        Destroy(playerNicknameText);
+
+        _playersNicknames.Remove(playerNicknameText);
+        _playnerNicknamesPositions.Remove(name);
+    }
+
+    public void SetPlayerNicknamePosition(string name, Vector3 ballPosition)
+    {
+        _playnerNicknamesPositions[name] = ballPosition;
+    }
+
+    private IEnumerator SetNicknamesPositions()
+    {
+        while(_playersNicknames.Count != 0)
+        {
+            for(int i = 0; i < _playersNicknames.Count; i++)
+            {
+                var name = _playersNicknames[i].text;
+                Vector2 newPosition =  _playnerNicknamesPositions[name];
+
+                _playersNicknames[i].transform.position = newPosition;
+            }
+            yield return null;
+        }
+        yield break;
     }
 }

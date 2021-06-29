@@ -20,7 +20,7 @@ public class CameraRaycast : MonoBehaviour
 
     private BallLogic _ballScript;
     private PlayerController _playerControllerScript;
-    private AudioPlayerLogic _audioScript;
+    private AudioPlayer _audioScript;
     public static string CurrentBall;
 
     public Transform ShootPoint;
@@ -35,7 +35,7 @@ public class CameraRaycast : MonoBehaviour
     {
         _currentCamera = Camera.main;
         _ballScript = GameObject.FindObjectOfType<BallLogic>();
-        _audioScript = FindObjectOfType<AudioPlayerLogic>();
+        _audioScript = FindObjectOfType<AudioPlayer>();
         ShootPoint = GameObject.Find("ShootPoint").transform;
         CameraTransform = transform;
     }

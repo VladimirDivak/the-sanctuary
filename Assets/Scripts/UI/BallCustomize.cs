@@ -10,14 +10,10 @@ using System;
 
 public class BallCustomize : MonoBehaviour
 {
-    [SerializeField]
-    public Material Material;
     private Color _baseColor;
     private Color _linesColor;
-
-    [SerializeField]
-    private Texture2D[] Patterns;
-    public static Texture2D[] PatternsStatic;
+    private Material _material;
+    private Texture2D[] _patterns;
 
     [SerializeField]
     private Sprite[] PatternSprites;
@@ -45,6 +41,7 @@ public class BallCustomize : MonoBehaviour
     public static string linesColorID = "Color_eddccc71b84c49ab919570d1ac6ad4e1";
     public static string usePatternID = "Boolean_eff8438e3cb14ec1b5cfd5378285884c";
     public static string patternTextureID = "Texture2D_bd683b01ffb44a2b800238c9447ea3de";
+    public static string useNetworkFresnelID = "UseNetworkFresnel";
 
     private List<Transform> _childrenTransform = new List<Transform>();
     private event Action OnFadeOutEvent;
@@ -63,7 +60,8 @@ public class BallCustomize : MonoBehaviour
 
     void Start()
     {
-        PatternsStatic = Patterns;
+        _material = FindObjectOfType<ObjectSpawner>().MyBallMaterial;
+        _patterns = FindObjectOfType<ObjectSpawner>().Patterns;
 
         _description = GameObject.Find("Description");
         _description.SetActive(false);
@@ -73,14 +71,14 @@ public class BallCustomize : MonoBehaviour
         _baseColorTexture = GameObject.Find("BaseColor_Texture").GetComponent<Image>();
         _linesColorTexture = GameObject.Find("LinesColor_Texture").GetComponent<Image>();
 
-        _baseColor = Material.GetColor(baseColorID);
+        _baseColor = _material.GetColor(baseColorID);
         _baseColorTexture.color = _baseColor;
 
-        _linesColor = Material.GetColor(linesColorID);
+        _linesColor = _material.GetColor(linesColorID);
         _linesColorTexture.color = _linesColor;
 
-        UsePattern = Material.GetInt(usePatternID);
-        CurrentPattern = Material.GetTexture(patternTextureID) as Texture2D;
+        UsePattern = _material.GetInt(usePatternID);
+        CurrentPattern = _material.GetTexture(patternTextureID) as Texture2D;
 
         _colorPicker = GameObject.Find("ColorPicker");
         _colorPickerTexture = _colorPicker.GetComponent<Image>().mainTexture as Texture2D;
@@ -119,26 +117,21 @@ public class BallCustomize : MonoBehaviour
 
     private void OnFadeOut()
     {
-        foreach (var item in GameObject.FindGameObjectsWithTag("Ball"))
-        {
-            item.GetComponent<MeshRenderer>().material = Material;
-        }
+        Network.accountData.baseColor = "#" + ColorUtility.ToHtmlStringRGB(_baseColor);
+        Network.accountData.linesColor = "#" + ColorUtility.ToHtmlStringRGB(_linesColor);
 
-        Network.accountData.baseColor = "#" + ColorUtility.ToHtmlStringRGBA(_baseColor);
-        Network.accountData.linesColor = "#" + ColorUtility.ToHtmlStringRGBA(_linesColor);
-
-        if(UsePattern == 0){
-            Network.accountData.usePattern = false;
-            Network.accountData.patternName = string.Empty;
-        }
-        else
+        if(UsePattern == 1)
         {
             Network.accountData.usePattern = true;
             Network.accountData.patternName = CurrentPattern.name;
         }
+        else
+        {
+            Network.accountData.usePattern = false;
+            Network.accountData.patternName = string.Empty;
+        }
 
         FindObjectOfType<Network>().SendServerData("ServerRegistration", Network.accountData);
-
         FindObjectOfType<GUI>().SetFade(5);
     }
 
@@ -202,12 +195,14 @@ public class BallCustomize : MonoBehaviour
         switch(element)
         {
             case "BaseColor":
-                Material.SetColor(baseColorID, newColor);
+                _material.SetColor(baseColorID, newColor);
                 _baseColorTexture.color = newColor;
+                _baseColor = newColor;
                 break;
             case "LinesColor":
-                Material.SetColor(linesColorID, newColor);
+                _material.SetColor(linesColorID, newColor);
                 _linesColorTexture.color = newColor;
+                _linesColor = newColor;
                 break;
         }
     }
@@ -217,25 +212,30 @@ public class BallCustomize : MonoBehaviour
         switch(element)
         {
             case "BaseColor":
-                Material.SetColor(baseColorID, _baseColor);
+                _material.SetColor(baseColorID, _baseColor);
                 break;
             case "LinesColor":
-                Material.SetColor(linesColorID, _linesColor);
+                _material.SetColor(linesColorID, _linesColor);
                 break;
         }
     }
 
     public void SetPattern(string PatternName)
     {
-        var PatternsList = Patterns.Where(x => x.name.Contains(PatternName)).ToList();
+        var PatternsList = _patterns.Where(x => x.name.Contains(PatternName)).ToList();
 
         if(PatternsList.Count != 0)
         {
-            Material.SetInt(usePatternID, 1);
-            Material.SetTexture(patternTextureID, PatternsList.Last());
+            _material.SetInt(usePatternID, 1);
+            _material.SetTexture(patternTextureID, PatternsList.Last());
+            UsePattern = 1;
             CurrentPattern = PatternsList.Last();
         }
-        else Material.SetInt(usePatternID, 0);
+        else
+        {
+            _material.SetInt(usePatternID, 0);
+            UsePattern = 0;
+        }
     }
 
     public void OnCustomPanelConfirmPressed()

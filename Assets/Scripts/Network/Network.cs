@@ -44,6 +44,7 @@ public class Network : MonoBehaviour
     public static event Action<string[]> OnGameEndingEvent;
 
     private protected HubConnection _connection;
+    public static Outlook BallOutlook;
 
     void Start()
     {
@@ -147,6 +148,18 @@ public class Network : MonoBehaviour
             {
                 accountData = JsonConvert.DeserializeObject<Account>(PersonalData);
                 SessionID = id;
+
+                Outlook ballOutlook = new Outlook
+                {
+                    BaseColor = accountData.baseColor,
+                    LinesColor = accountData.linesColor,
+                    UsePattern = accountData.usePattern,
+                    PatternName = accountData.patternName
+                };
+
+                BallOutlook = ballOutlook;
+
+                FindObjectOfType<ObjectSpawner>().SetBallMaterial(BallOutlook);
             }
         });
 
@@ -173,8 +186,6 @@ public class Network : MonoBehaviour
         {
             var data = JsonConvert.DeserializeObject<Track[]>(x);
             Debug.Log(data.Length);
-            
-            FindObjectOfType<AudioPlayerLogic>().UnpackTracksData(data);
         });
 
         //  событие по запросу клиента на создание новой игровой комнаты
