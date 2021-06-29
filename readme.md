@@ -18,15 +18,15 @@
 Знакомство с игрой начинается с главного меню, задний фон которого представляет из себя баскетбольный мяч на фоне зала, а перед ним - пункты, плавно меняющие размер в зависимости наведения на них мышью.
 Задний фон реагирует на перемещение мыши и плавно вращает мяч и вид зала в зависимости от положения курсора.
 
-![Menu Items](https://drive.google.com/uc?export=view&id=1IGEvH2XHUy1G7QWThypkqAqm1jGEpqZf "Menu Items")
+![Menu Items](https://drive.google.com/uc?export=view&id=1ogHqUD3vIyitaYc9mF3QBi6X7zIl6Ut4 "Menu Items")
 
 При отсутствии регистрации в игре Вам будет предложено два варианта: ввод логина и пароля, либо создание нового аккаунта, за чем последует кастомизация внешнего вида мяча.
 
-![Ball Customize Menu](https://drive.google.com/uc?export=view&id=1fOq7pnnM5Fz4vFLTxwP1ECW5evDueWUp "Ball Customize Menu")
+![Ball Customize Menu](https://drive.google.com/uc?export=view&id=1ot1lxQ1aABB3IbBJb0l2Nr-Y4M0pAkhq "Ball Customize Menu")
 
 На площадке игрок может осуществлять броски мяча в корзину, а также управлять музыкальным плеером, который представлен в виде большого дисплея в центре зала и игровым табло ниже.
 
-![Game Environment](https://drive.google.com/uc?export=view&id=1SX4M677NAsN0HNB6TsF_NNvoN6eVpjWv "Game Environment")
+![Game Environment](https://drive.google.com/uc?export=view&id=16M4sgWoWSQNjUFBWYOfOPNnXKvb8zwa4 "Game Environment")
 
 # Различия между платформами
 
@@ -42,7 +42,8 @@
 - на телефонах сейчас используется такой же метод, однако есть идея управления одним пальцем: сила броска регулируется перемещением большого пальца вертикально, до момента, пока игрок не найдет положение, в котором мяч, опять-таки, становится зелёным;
 - в VR - берём мяч и бросаем в кольцо, разве что игра вам немного скорректирует траекторию полёта.
 
-![Ball Throwing](https://drive.google.com/uc?export=view&id=1clcG4vYJ2iKWrASic3BX4Bx0ZIzK9_6x "Ball Throwing")
+![Ball Throwing](https://drive.google.com/uc?export=view&id=1EgO-_7iAtUFS28HI3eXFRteyO8TvIVyI "Ball Throwing")
+![VR](https://drive.google.com/uc?export=view&id=1cj26etbIRg7Rj8H7cBXurEBmD3FcP2iU "VR")
 
 # Музыка в игре
 
@@ -50,13 +51,13 @@
 Вся музыка и данные о треках и их создателях подгружаются в зависимости от наличия обновлений на сервере. Также имеется счетчик прослушиваний того или иного трека.
 Надеюсь, что с данным функционалом в случае популярности проекта у задействованных музыкантов появится больший спрос на их творчество.
 
-![Music Player](https://drive.google.com/uc?export=view&id=1KI9flj9EWYFPwLI43Sxx0TcIhaN-IlIa "Music Player")
+![Music Player](https://drive.google.com/uc?export=view&id=1cDroEQDzvLmR09f4fjHzeseWzTXYThch "Music Player")
 
 # Мультиплеер
 
 В какой-то момент я посчитал, что просто бросать мяч в кольцо будет интересно только тем, кто понимает, что данный зал является копией зала Дрейка - тем, кто скачает приложение только из-за того, что оно случайным образом было ему порекомендовано магазином, захочется какого-то геймплея, и для этого я придумал несколько режимов игры, а чтобы проект было ещё интереснее разрабатывать я приделал к этому всему сетевую составляющую.
 
-![Multiplayer](https://drive.google.com/uc?export=view&id=1HtgalFEK8pOkp1s4VpBOX36aRSORRew_ "Multiplayer")
+![Multiplayer](https://drive.google.com/uc?export=view&id=1XLCzCjnvmAEEjpndT3qKbjsLq4iAp5zW "Multiplayer")
 
 Как это работает:
 
