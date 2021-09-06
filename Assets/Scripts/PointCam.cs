@@ -66,7 +66,7 @@ public class PointCam : MonoBehaviour
             _netPosition = _net1;
 
             NetAngle = _net1forAngle;
-            if(_ballScript.StartToFlyPosition.z < 0)
+            if(_ballScript.startToFlyPosition.z < 0)
             {
                 AngleModule = -1;
                 Test = new Vector3(Test.x, Test.y, -Test.z);
@@ -78,7 +78,7 @@ public class PointCam : MonoBehaviour
 
             Offset = new Vector3(_constOffset.x - 0.438f, _constOffset.y, _constOffset.z);
             NetAngle = _net2forAngle;
-            if(_ballScript.StartToFlyPosition.z > 0)
+            if(_ballScript.startToFlyPosition.z > 0)
             {
                 AngleModule = -1;
                 Test = new Vector3(Test.x, Test.y, -Test.z);
@@ -88,7 +88,7 @@ public class PointCam : MonoBehaviour
 
         if(_ballScript != null)
         {
-            Angle = Vector3.Angle(NetAngle, NetAngle - _ballScript.StartToFlyPosition) * AngleModule;
+            Angle = Vector3.Angle(NetAngle, NetAngle - _ballScript.startToFlyPosition) * AngleModule;
             _pointCamTransform.rotation = Quaternion.Euler(new Vector3(30, Angle + RotationOffset, 0));
 
             _pointCamTransform.position = _cameraDirection * _constOffset.magnitude + _ballTransform.position - new Vector3(0, _constOffset.y, 0);

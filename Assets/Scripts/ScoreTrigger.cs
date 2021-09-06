@@ -11,43 +11,20 @@ public class ScoreTrigger : MonoBehaviour
     private Transform _triggerTransform;
     private AudioSource _netSound;
 
-    private NetworkBall _otherBallScript;
-    private BallLogic _ballScript;
-
     void Start()
     {
         _netSound = GetComponent<AudioSource>();
         _triggerTransform = transform;
     }
 
-    public void OnBallInit() =>
-        _ballScript = GameObject.FindObjectOfType<BallLogic>();
-
     private void OnTriggerEnter(Collider other)
     {
-        _otherBallScript = null;
-        
-        if(other.TryGetComponent<BallLogic>(out _ballScript))
+        if(other.TryGetComponent<Ball>(out var ball))
         {
-            _ballScript = other.GetComponent<BallLogic>();
-            _ballScript.StopCheckBallHight();
-
-            if(_ballScript.BallCorrectHigh == true)
-                _netSound.Play();
-        }
-        else
-        {
-            _otherBallScript = other.GetComponent<NetworkBall>();
-
-            if(_otherBallScript.C_ChekBallHigh != null)
+            ball.StopCheckBallHight();
+            if(ball.ballCorrectHigh == true)
             {
-                _otherBallScript.StopCoroutine(_otherBallScript.C_ChekBallHigh);
-                _otherBallScript.C_ChekBallHigh = null;
-            }
-            
-            if(_otherBallScript.BallCorrectHigh == true)
-            {
-                _otherBallScript.itsPoint = true;
+                ball.itsPoint = true;
                 _netSound.Play();
             }
         }

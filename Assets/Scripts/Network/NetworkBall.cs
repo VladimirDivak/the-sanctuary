@@ -15,67 +15,29 @@ using System.Linq;
 //  проектом, по этому здесь имеется несколько спорных решений, которые
 //  в дальнейшем я намерен изменить
 
-public class NetworkBall : MonoBehaviour
+public class NetworkBall : Ball
 {
-    [SerializeField]
-    public List<AudioClip> BouncesSound = new List<AudioClip>();
-
     public string PlayerID;
     private Player _playerData;
 
     public string PlayerName => _playerData.login;
 
-    private AudioSource _bouncesSource;
+    private Coroutine c_ballGrabing;
 
-    public Transform NetworkBallTransform;
-    public Rigidbody NetworkBallRB;
 
-    public int ParketHitCount = 0;
-    public bool OnAir;
-    public bool itsPoint;
-
-    private bool _grabing;
-
-    private Vector3 _lastPos;
-    private Quaternion _lastRot;
-
-    private Coroutine C_BallOnAir;
-    private Coroutine C_BallGrabing;
-    public Coroutine C_ChekBallHigh;
-
-    private bool _ballOnParket;
-    public bool BallCorrectHigh;
-
-    private GUI _gui;
-    private Camera _mainCamera;
+    // private GUI _gui;
+    // private Camera _mainCamera;
 
     private void Start()
     {
-        _gui = FindObjectOfType<GUI>();
-        _mainCamera = Camera.main;
-
-        NetworkBallTransform = transform;
+        _transform = transform;
         _bouncesSource = GetComponent<AudioSource>();
-        NetworkBallRB = GetComponent<Rigidbody>();
+        _rigidBody = GetComponent<Rigidbody>();
 
         Network.OnBallMovingEvent += OnBallMoving;
         Network.OnBallThrowingEvent += OnBallThrowing;
 
         FindObjectOfType<GameManager>().ClothColliders.Add(new ClothSphereColliderPair(GetComponent<SphereCollider>(), GetComponent<SphereCollider>()));
-    }
-
-    private void Update()
-    {
-        if(_mainCamera.isActiveAndEnabled)
-        {
-            var nicknamePosition = new Vector3(NetworkBallTransform.position.x,
-                NetworkBallTransform.position.y + 0.3f,
-                NetworkBallTransform.position.z);
-
-            _gui.SetPlayerNicknamePosition(_playerData.login,
-                _mainCamera.WorldToScreenPoint(nicknamePosition));
-            Debug.Log(_mainCamera.transform.TransformPoint(NetworkBallTransform.position - _mainCamera.transform.position));
-        }
     }
 
     //  метод вызывается в ObjectSpawner'е и инициализирует полученные с сервера
@@ -126,94 +88,94 @@ public class NetworkBall : MonoBehaviour
 
     public void DisablePhysic(PlayerTransform ballTransform)
     {
-        _lastPos = new Vector3(ballTransform.X,
+        _lastPosition = new Vector3(ballTransform.X,
             ballTransform.Y,
             ballTransform.Z);
 
-        _lastRot = Quaternion.Euler(new Vector3(ballTransform.RotX,
+        _lastRotation = Quaternion.Euler(new Vector3(ballTransform.RotX,
             ballTransform.RotY,
             ballTransform.RotZ));
 
-        if(_grabing == false)
+        if(isGrabed == false)
         {
-            _grabing = true;
-            OnAir = false;
+            isGrabed = true;
+            onAir = false;
 
             InitGrabing();
 
-            NetworkBallRB.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-            NetworkBallRB.isKinematic = true;
-            NetworkBallRB.detectCollisions = false;
+            _rigidBody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            _rigidBody.isKinematic = true;
+            _rigidBody.detectCollisions = false;
 
-            if(C_BallGrabing != null)
+            if(c_ballGrabing != null)
             {
-                StopCoroutine(C_BallGrabing);
-                C_BallGrabing = null;
+                StopCoroutine(c_ballGrabing);
+                c_ballGrabing = null;
 
             }
-            C_BallGrabing = StartCoroutine(BallMoving());
+            c_ballGrabing = StartCoroutine(BallMoving());
         }
     }
 
     public void EnablePhysic(Force throwForce)
     {
-        NetworkBallTransform.position = new Vector3(throwForce.posX, throwForce.posY, throwForce.posZ);
-        NetworkBallTransform.rotation = Quaternion.Euler(new Vector3(throwForce.rotX,
+        _transform.position = new Vector3(throwForce.posX, throwForce.posY, throwForce.posZ);
+        _transform.rotation = Quaternion.Euler(new Vector3(throwForce.rotX,
             throwForce.rotY,
             throwForce.rotZ));
 
         Vector3 force = new Vector3(throwForce.X, throwForce.Y, throwForce.Z);
         Vector3 torque = new Vector3(throwForce.torqueX, throwForce.torqueY, throwForce.torqueZ);
 
-        if(C_ChekBallHigh == null)
+        if(c_chekBallHigh == null)
         {
-            C_ChekBallHigh = StartCoroutine(ChekBallHigh());
+            c_chekBallHigh = StartCoroutine(ChekBallHigh());
         }
         else
         {
-            StopCoroutine(C_ChekBallHigh);
-            C_ChekBallHigh = null;
+            StopCoroutine(c_chekBallHigh);
+            c_chekBallHigh = null;
         }
 
-        StopCoroutine(C_BallGrabing);
+        StopCoroutine(c_ballGrabing);
 
-        OnAir = true;
+        onAir = true;
         
-        if(C_BallOnAir == null)
+        if(c_ballOnAir == null)
         {
-            C_BallOnAir = StartCoroutine(WaitingBallOnAir());
+            c_ballOnAir = StartCoroutine(WaitingBallOnAir());
         }
         else
         {
-            StopCoroutine(C_BallOnAir);
-            C_BallOnAir = StartCoroutine(WaitingBallOnAir());
+            StopCoroutine(c_ballOnAir);
+            c_ballOnAir = StartCoroutine(WaitingBallOnAir());
         }
 
-        NetworkBallRB.isKinematic = false;
-        NetworkBallRB.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-        NetworkBallRB.detectCollisions = true;
+        _rigidBody.isKinematic = false;
+        _rigidBody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+        _rigidBody.detectCollisions = true;
         
 
-        NetworkBallRB.AddForce(force);
-        NetworkBallRB.AddTorque(torque);
+        _rigidBody.AddForce(force);
+        _rigidBody.AddTorque(torque);
 
-        _grabing = false;
+        isGrabed = false;
     }
 
     private void InitGrabing()
     {
-        if(C_ChekBallHigh != null)
+        if(c_chekBallHigh != null)
         {
-            StopCoroutine(C_ChekBallHigh);
-            C_ChekBallHigh = null;
+            StopCoroutine(c_chekBallHigh);
+            c_chekBallHigh = null;
         }
 
         _ballOnParket = false;
         ParketHitCount = 0;
-        BallCorrectHigh = false;
+        ballCorrectHigh = false;
     }
 
-    private void OnCollisionEnter(Collision collision)
+    protected override void OnCollisionEnter(Collision collision)
     {
         if (collision.relativeVelocity.magnitude > 0.1f)
         {
@@ -227,24 +189,15 @@ public class NetworkBall : MonoBehaviour
 
             ParketHitCount++;
 
-            if(C_BallOnAir != null)
+            if(c_ballOnAir != null)
             {
-                StopCoroutine(C_BallOnAir);
-                C_BallOnAir = null;
-            }
-            
-            if(ParketHitCount == 1)
-            {
-                // if(GameRulesScript.isGame == true && OnAir == true)
-                // {
-                //     var HitPoint = collision.contacts[0];
-                //     if(itsPoint == false) GameRulesScript.SetMarkerVisable(new Vector3(HitPoint.point.x, 0, HitPoint.point.z));
-                // }
+                StopCoroutine(c_ballOnAir);
+                c_ballOnAir = null;
             }
         }
     }
 
-    private IEnumerator WaitingBallOnAir()
+    protected override IEnumerator WaitingBallOnAir()
     {
         int count = 0;
 
@@ -254,7 +207,7 @@ public class NetworkBall : MonoBehaviour
             count++;
             if(count == 10)
             {
-                NetworkBallRB.AddForce(new Vector3(2,2,0), ForceMode.Impulse);
+                _rigidBody.AddForce(new Vector3(2,2,0), ForceMode.Impulse);
                 break;
             }
         }
@@ -263,13 +216,13 @@ public class NetworkBall : MonoBehaviour
 
     private IEnumerator BallMoving()
     {
-        NetworkBallTransform.position = _lastPos;
-        NetworkBallTransform.rotation = _lastRot;
+        _transform.position = _lastPosition;
+        _transform.rotation = _lastRotation;
 
         while(true)
         {
-            NetworkBallTransform.position = Vector3.Lerp(NetworkBallTransform.position, _lastPos, 0.5f);
-            NetworkBallTransform.rotation = Quaternion.Lerp(NetworkBallTransform.rotation, _lastRot, 0.5f);
+            _transform.position = Vector3.Lerp(_transform.position, _lastPosition, 0.5f);
+            _transform.rotation = Quaternion.Lerp(_transform.rotation, _lastRotation, 0.5f);
             yield return null;
         }
     }
@@ -279,9 +232,9 @@ public class NetworkBall : MonoBehaviour
         while(true)
         {
             yield return null;
-            if(NetworkBallTransform.position.y >= 2.8f)
+            if(_transform.position.y >= 2.8f)
             {
-                BallCorrectHigh = true;
+                ballCorrectHigh = true;
                 break;
             }
         }

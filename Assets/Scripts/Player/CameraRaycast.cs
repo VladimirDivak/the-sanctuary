@@ -68,7 +68,7 @@ public class CameraRaycast : MonoBehaviour
                 {
                     _ballScript = cameraHit.transform.GetComponent<BallLogic>();
 
-                    if (!_ballScript.OnAir)
+                    if (!_ballScript.onAir)
                     {
                         _ballScript.PhysicDisable();
                     }
@@ -123,6 +123,7 @@ public class CameraRaycast : MonoBehaviour
 
                 if(IsBoard1 || IsBoard2)
                 {
+                    
                     //  на тот момент это было лучшим решением по заданию траектории полёта мяча в сторону корзины
                     //  
                     //  формула была выведена посредством нахождения 10ти точек броска мяча в кольцо вдоль одной прямой,
@@ -131,10 +132,11 @@ public class CameraRaycast : MonoBehaviour
                     //  
                     //  после этого мяч стал с вероятностью в 98% попадать в кольцо, из-за чего пришлось вводить различные
                     //  коэффициенты для внесения погрешности
-                    coef = 0.42f * 4.6f / _ballScript.Maginude;
-                    _ballScript.ForceConst = Mathf.Clamp(0.0088445f * Mathf.Pow(_ballScript.Maginude, 4) -0.2743184f * Mathf.Pow(_ballScript.Maginude, 3) + 2.8879387f * Mathf.Pow(_ballScript.Maginude, 2) - 5.0169378f * _ballScript.Maginude + 82.8919099f, 0, 160);
 
-                    Vector3 ShootPos = CameraTransform.position - (CameraTransform.rotation * new Vector3(0, 0, -_ballScript.Maginude * coef));
+                    coef = 0.42f * 4.6f / _ballScript.magnitude;
+                    _ballScript.ForceConst = Mathf.Clamp(0.0088445f * Mathf.Pow(_ballScript.magnitude, 4) -0.2743184f * Mathf.Pow(_ballScript.magnitude, 3) + 2.8879387f * Mathf.Pow(_ballScript.magnitude, 2) - 5.0169378f * _ballScript.magnitude + 82.8919099f, 0, 160);
+
+                    Vector3 ShootPos = CameraTransform.position - (CameraTransform.rotation * new Vector3(0, 0, -_ballScript.magnitude * coef));
 
                     ShootPoint.position = new Vector3(Mathf.Clamp(ShootPos.x, -17, 17), Y, Mathf.Clamp(ShootPos.z, -17, 17));
                 }
