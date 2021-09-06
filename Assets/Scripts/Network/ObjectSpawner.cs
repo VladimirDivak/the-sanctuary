@@ -132,9 +132,9 @@ public class ObjectSpawner : MonoBehaviour
     public void SpawnBall(Account myData, Vector3 position)
     {
         var newMyBall = Instantiate(MyBall, position, Quaternion.identity);
-        newMyBall.GetComponent<BallLogic>().SetBallOutlook(MyBallMaterial);
+        newMyBall.GetComponent<PlayerBall>().SetBallOutlook(MyBallMaterial);
 
-        if(FindObjectsOfType<BallLogic>().Length <= 1)
+        if(FindObjectsOfType<PlayerBall>().Length <= 1)
         {
             var backgroundBall = GameObject.Find("Background Ball");
             backgroundBall.GetComponent<Renderer>().material = MyBallMaterial;

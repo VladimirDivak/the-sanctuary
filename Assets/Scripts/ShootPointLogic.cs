@@ -21,13 +21,13 @@ public class ShootPointLogic : MonoBehaviour
     public static float ToNetDistance;
 
     public static Transform PlayerControllerTransform;
-    private BallLogic _ballScript;
+    private PlayerBall _ballScript;
 
     bool _backToConst;
 
     public void OnBallInit()
     {
-        _ballScript = GameObject.Find("Ball").GetComponent<BallLogic>();
+        _ballScript = GameObject.Find("Ball").GetComponent<PlayerBall>();
     }
 
     void Start()

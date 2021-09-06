@@ -37,9 +37,13 @@ public class Ball : MonoBehaviour
         }
     }
 
-    protected virtual void OnCollisionEnter(Collision other)
+    protected virtual void OnCollisionEnter(Collision collision)
     {
-        
+        if(collision.relativeVelocity.magnitude > 0.1f)
+        {
+            _bouncesSource.clip = BouncesSound[Random.Range(0, BouncesSound.Count)];
+            _bouncesSource.Play();
+        }
     }
 
     protected virtual IEnumerator ChekHigh()
@@ -47,8 +51,21 @@ public class Ball : MonoBehaviour
         return null;
     }
 
-    protected virtual IEnumerator WaitingBallOnAir()
+    protected IEnumerator WaitingBallOnAir()
     {
-        return null;
+        int count = 0;
+
+        while(_ballOnParket == false)
+        {
+            yield return new WaitForSeconds(1);
+            count++;
+            
+            if(count == 10)
+            {
+                _rigidBody.AddForce(new Vector3(2,2,0), ForceMode.Impulse);
+                break;
+            }
+        }
+        yield break;
     }
 }

@@ -15,7 +15,7 @@ public class PointCam : MonoBehaviour
     private Vector3 _net1forAngle, _net2forAngle;
 
     private string _currentBall;
-    private BallLogic _ballScript;
+    private PlayerBall _ballScript;
 
     private Vector3 _net1, _net2;
 
@@ -30,7 +30,7 @@ public class PointCam : MonoBehaviour
         //  поле осталось еще с тех времен, когда
         //  на площадке присутствовал один мяч игрока
         //  и мячи сетевых игроков
-        _ballScript = GameObject.FindObjectOfType<BallLogic>();
+        _ballScript = GameObject.FindObjectOfType<PlayerBall>();
 
         _net1forAngle = new Vector3(_net1.x, 0, 0);
         _net2forAngle = new Vector3(-_net1.x, 0, 0);
@@ -47,7 +47,7 @@ public class PointCam : MonoBehaviour
     {
         _ballTransform = _ball;
         _currentBall = _ballTransform.transform.name;
-        _ballScript = _ballTransform.GetComponent<BallLogic>();
+        _ballScript = _ballTransform.GetComponent<PlayerBall>();
     }
 
     private void Update()

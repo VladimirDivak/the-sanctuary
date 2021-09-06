@@ -18,7 +18,7 @@ public class CameraRaycast : MonoBehaviour
     public static bool IsBoard1;
     public static bool IsBoard2;
 
-    private BallLogic _ballScript;
+    private PlayerBall _ballScript;
     private PlayerController _playerControllerScript;
     private AudioPlayer _audioScript;
     public static string CurrentBall;
@@ -34,7 +34,7 @@ public class CameraRaycast : MonoBehaviour
     void Start()
     {
         _currentCamera = Camera.main;
-        _ballScript = GameObject.FindObjectOfType<BallLogic>();
+        _ballScript = GameObject.FindObjectOfType<PlayerBall>();
         _audioScript = FindObjectOfType<AudioPlayer>();
         ShootPoint = GameObject.Find("ShootPoint").transform;
         CameraTransform = transform;
@@ -66,7 +66,7 @@ public class CameraRaycast : MonoBehaviour
             {
                 if(cameraHit.transform.tag == "Ball")
                 {
-                    _ballScript = cameraHit.transform.GetComponent<BallLogic>();
+                    _ballScript = cameraHit.transform.GetComponent<PlayerBall>();
 
                     if (!_ballScript.onAir)
                     {
@@ -123,7 +123,7 @@ public class CameraRaycast : MonoBehaviour
 
                 if(IsBoard1 || IsBoard2)
                 {
-                    
+
                     //  на тот момент это было лучшим решением по заданию траектории полёта мяча в сторону корзины
                     //  
                     //  формула была выведена посредством нахождения 10ти точек броска мяча в кольцо вдоль одной прямой,

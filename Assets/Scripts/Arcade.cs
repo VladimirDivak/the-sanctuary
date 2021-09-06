@@ -10,7 +10,7 @@ public class Arcade : MonoBehaviour
 {
     private GUI _guiScript;
     // private GamemodeSelector ModeSelector;
-    private BallLogic _ballScript;
+    private PlayerBall _ballScript;
 
     private Rigidbody _ballRB;
 
@@ -85,7 +85,7 @@ public class Arcade : MonoBehaviour
 
     public void ArcadeInitialization()
     {
-        _ballRB = GameObject.FindObjectOfType<BallLogic>().GetComponent<Rigidbody>();
+        _ballRB = GameObject.FindObjectOfType<PlayerBall>().GetComponent<Rigidbody>();
 
         // ModeSelector.HideGamemodeSelector();
         C_ArcadeInit = StartCoroutine(ArcadeInit());
@@ -101,7 +101,7 @@ public class Arcade : MonoBehaviour
             _shootingPos[x].y = -0.08000016f;
         }
 
-        _ballScript = FindObjectOfType<BallLogic>();
+        _ballScript = FindObjectOfType<PlayerBall>();
         _isInit = true;
     }
 

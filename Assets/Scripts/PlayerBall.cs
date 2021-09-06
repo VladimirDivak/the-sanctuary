@@ -16,7 +16,7 @@ using TheSanctuary;
 //  coroutine C_ChangeForceOffset - задаёт плавное изменение погрешности
 //  броска, т.к. без этого мяч практически всегда попадает в кольцо
 
-public class BallLogic : Ball
+public class PlayerBall : Ball
 {
     [SerializeField]
     Material TransparentMaterial;
@@ -240,6 +240,8 @@ public class BallLogic : Ball
 
     protected override void OnCollisionEnter(Collision collision)
     {
+        base.OnCollisionEnter(collision);
+
         if(collision.transform.tag == "Parket")
         {
             _cameraScript.AbleToShowPointCam = false;
@@ -257,12 +259,6 @@ public class BallLogic : Ball
                 _ballOnParket = true;
             }
 
-        }
-
-        if (collision.relativeVelocity.magnitude > 0.1f)
-        {
-            _bouncesSource.clip = BouncesSound[Random.Range(0, BouncesSound.Count)];
-            _bouncesSource.Play();
         }
     }
 
@@ -305,23 +301,6 @@ public class BallLogic : Ball
         }
     }
 
-    protected override IEnumerator WaitingBallOnAir()
-    {
-        int count = 0;
-
-        while(_ballOnParket == false)
-        {
-            yield return new WaitForSeconds(1);
-            count++;
-            if(count == 10)
-            {
-                _rigidBody.AddForce(new Vector3(2, 2, 0), ForceMode.Impulse);
-                break;
-            }
-        }
-        yield break;
-    }
-
     protected override IEnumerator ChekHigh()
     {
         while(true)
@@ -339,6 +318,7 @@ public class BallLogic : Ball
     private IEnumerator ChangeForceOffset()
     {
         int RandSpeed;
+        
         if(PlayerController.NetDistance < 6.9f)
         {
             RandSpeed = Random.Range(2, 7);
