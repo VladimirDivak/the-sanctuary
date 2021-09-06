@@ -46,9 +46,18 @@ public class Ball : MonoBehaviour
         }
     }
 
-    protected virtual IEnumerator ChekHigh()
+    protected IEnumerator ChekHigh()
     {
-        return null;
+        while(true)
+        {
+            yield return null;
+            if(_transform.position.y >= 2.8f)
+            {
+                ballCorrectHigh = true;
+                break;
+            }
+        }
+        yield break;
     }
 
     protected IEnumerator WaitingBallOnAir()

@@ -214,11 +214,7 @@ public class PlayerBall : Ball
     {
         _pointCamScript.OnBallGrab(transform);
 
-        if(c_chekBallHigh != null)
-        {
-            StopCoroutine(c_chekBallHigh);
-            c_chekBallHigh = null;
-        }
+        StopCheckBallHight();
 
         _ballOnParket = false;
         ballCorrectHigh = false;
@@ -299,20 +295,6 @@ public class PlayerBall : Ball
             _meshRenderer.material = TransparentMaterial;
             _forceOffset = 0;
         }
-    }
-
-    protected override IEnumerator ChekHigh()
-    {
-        while(true)
-        {
-            yield return null;
-            if(_transform.position.y >= 2.8f)
-            {
-                ballCorrectHigh = true;
-                break;
-            }
-        }
-        yield break;
     }
 
     private IEnumerator ChangeForceOffset()

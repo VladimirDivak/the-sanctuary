@@ -127,15 +127,8 @@ public class NetworkBall : Ball
         Vector3 force = new Vector3(throwForce.X, throwForce.Y, throwForce.Z);
         Vector3 torque = new Vector3(throwForce.torqueX, throwForce.torqueY, throwForce.torqueZ);
 
-        if(c_chekBallHigh == null)
-        {
-            c_chekBallHigh = StartCoroutine(ChekBallHigh());
-        }
-        else
-        {
-            StopCoroutine(c_chekBallHigh);
-            c_chekBallHigh = null;
-        }
+        if(c_chekBallHigh != null) StopCheckBallHight();
+        c_chekBallHigh = StartCoroutine(ChekHigh());
 
         StopCoroutine(c_ballGrabing);
 
@@ -164,11 +157,7 @@ public class NetworkBall : Ball
 
     private void InitGrabing()
     {
-        if(c_chekBallHigh != null)
-        {
-            StopCoroutine(c_chekBallHigh);
-            c_chekBallHigh = null;
-        }
+        StopCheckBallHight();
 
         _ballOnParket = false;
         ParketHitCount = 0;
@@ -204,19 +193,5 @@ public class NetworkBall : Ball
             _transform.rotation = Quaternion.Lerp(_transform.rotation, _lastRotation, 0.5f);
             yield return null;
         }
-    }
-
-    public IEnumerator ChekBallHigh()
-    {
-        while(true)
-        {
-            yield return null;
-            if(_transform.position.y >= 2.8f)
-            {
-                ballCorrectHigh = true;
-                break;
-            }
-        }
-        yield break;
     }
 }
