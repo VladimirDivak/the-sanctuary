@@ -61,15 +61,11 @@ public class ObjectSpawner : MonoBehaviour
             var disconnectPlayerBall = _networkBallArray.Find(x => x.name == playerSessionId);
             var networkBallScript = disconnectPlayerBall.GetComponent<NetworkBall>();
 
-            _gui.ShowPopUpMessage($"player {networkBallScript.PlayerName} leave this room", Color.yellow, PopUpMessageType.Info);
             if(playerSessionId == RoomCreatorID)
             {
-                _gui.ShowPopUpMessage($"room closed", Color.red, PopUpMessageType.Error);
                 Network.GameMode = null;
                 Network.inRoom = false;
             }
-            
-            _gui.RemovePlayerNickname(networkBallScript.PlayerName);
             
             _networkBallArray.Remove(disconnectPlayerBall);
             Destroy(disconnectPlayerBall);
@@ -85,7 +81,6 @@ public class ObjectSpawner : MonoBehaviour
         try
         {
             SpawnNetworkPlayerBall(playerSessionId, playerAccount, false);
-            _gui.ShowPopUpMessage($"player {playerAccount.login} connected to room", Color.yellow, PopUpMessageType.Info);
         }
         catch(Exception ex)
         {
@@ -106,11 +101,6 @@ public class ObjectSpawner : MonoBehaviour
             {
                 SpawnNetworkPlayerBall(playersSessionIDs[i], playersAccounts[i], readyStatusList[i]);
             }
-
-            // скорее всего, этот код нужно выполнить по событию OnFadeOut в GameMode
-            _gui.ShowPopUpMessage($"you have joined the {playersAccounts.First().login}'s room",
-                Color.yellow,
-                PopUpMessageType.Info);
         }
         catch(Exception ex)
         {
@@ -123,8 +113,6 @@ public class ObjectSpawner : MonoBehaviour
         
         var newBall = Instantiate(NetworkBall, new Vector3(0, 1.5f, 0), Quaternion.identity);
         newBall.GetComponent<NetworkBall>().SetNetworkBallData(playerSessionID, playerData, playerReadyStatus);
-
-        _gui.AddPlayerNickname(playerData.login);
 
         _networkBallArray.Add(newBall);
     }

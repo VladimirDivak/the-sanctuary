@@ -23,7 +23,6 @@ public class RoomStateLine : MonoBehaviour
             Network network = FindObjectOfType<Network>();
 
             FindObjectOfType<UserInterface>().OnGameMenuExit();
-            GUI.ShowGameRoomsPanel(false);
             GUI.ShowGameUI(true);
 
             network.SendServerData("ServerOnRoomConnection", false,

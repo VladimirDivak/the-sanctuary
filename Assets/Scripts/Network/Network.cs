@@ -17,7 +17,10 @@ using System;
 
 public class Network : MonoBehaviour
 {
-    public static Account accountData = new Account();
+    public static Account accountData = new Account()
+    {
+        
+    };
 
     public static IMode GameMode;
     public static bool inRoom;
@@ -49,7 +52,8 @@ public class Network : MonoBehaviour
     void Start()
     {
         StartNetworkConnection();
-        SendServerData("ServerGetRoomsList");
+        if(_connection.State == HubConnectionState.Connected)
+            SendServerData("ServerGetRoomsList");
     }    
 
     //  ниже описаны метод с его расширениями по вызову событий на сервере
@@ -197,7 +201,6 @@ public class Network : MonoBehaviour
 
                 if(roomData.CreatorSessionID == SessionID)
                 {
-                    FindObjectOfType<GUI>().ShowPopUpMessage("the room is created.\nexpect players", Color.yellow, PopUpMessageType.Message);
                     ObjectSpawner.RoomCreatorID = SessionID;
 
                     inRoom = true;
@@ -213,7 +216,6 @@ public class Network : MonoBehaviour
 
                 OnNewRoomCreatedEvent?.Invoke(roomData);
             }
-            else FindObjectOfType<GUI>().ShowPopUpMessage("no free places for a room", Color.red, PopUpMessageType.Error);
         });
 
         //  событие по подлючению в игровую комнату нового игрока

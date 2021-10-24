@@ -19,7 +19,7 @@ public class Ball : MonoBehaviour
 
     private protected bool _ballOnParket;
 
-    public int ParketHitCount { get; protected set; }
+    public int parketHitCount { get; protected set; }
 
     private protected Coroutine c_ballOnAir;
     private protected Coroutine c_chekBallHigh;

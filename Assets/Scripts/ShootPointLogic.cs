@@ -63,12 +63,12 @@ public class ShootPointLogic : MonoBehaviour
             Debug.LogWarning("Возможно, котроллеры ещё не были загружены");
         }
 
-        if (CameraRaycast.IsBoard1)
+        if (CameraRaycast.isBoard1)
         {
             NET = new Vector3(Net1.position.x, _y, Net1.position.z);
             ToNetFromPoint = _toNet1FromPoint;
         }
-        else if(CameraRaycast.IsBoard2)
+        else if(CameraRaycast.isBoard2)
         {
             NET = new Vector3(Net2.position.x, _y, Net2.position.z);
             ToNetFromPoint = _toNet2FromPoint;
@@ -97,7 +97,7 @@ public class ShootPointLogic : MonoBehaviour
         else
         {
             _backToConst = true;
-            PointTransform.position = new Vector3(PlayerController.ControllerTransform.position.x, 3, PlayerController.ControllerTransform.position.z) + CameraRaycast.CameraTransform.forward;
+            PointTransform.position = new Vector3(PlayerController.controllerTransform.position.x, 3, PlayerController.controllerTransform.position.z) + CameraRaycast.cameraTransform.forward;
         }
     }
 }

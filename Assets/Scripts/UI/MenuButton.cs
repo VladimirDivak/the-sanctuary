@@ -2,14 +2,6 @@ using System.Collections;
 using UnityEngine;
 using TMPro;
 
-//  логика работы кнопок главного меню
-//  
-//  кнопки увеличиваются при наведении на них
-//  курсора и уменьшаются после перевода курсора
-//  с их трансформа
-//
-//  при нажатии на кнопку запускается логика затухания
-
 public class MenuButton : MonoBehaviour
 {
     private UserInterface _ui;

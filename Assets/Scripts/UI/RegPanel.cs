@@ -304,16 +304,16 @@ public class RegPanel : MonoBehaviour
         
         if(ErrorTextField.name.Contains("_Login"))
         {
-            if(Network.accountData.login != null)  
-                FindObjectOfType<GUI>().SetFade(5f);
-            else
-            {
-                if(C_ErrorText != null) StopCoroutine(C_ErrorText);
-                C_ErrorText = StartCoroutine(ShowErrorText(new Dictionary<string, string>()
-                {
-                    {ErrorTextField.name, "wrong login"}
-                }));
-            }
+            // if(Network.accountData.login != null)  
+            //     FindObjectOfType<GUI>().SetFade(5f);
+            // else
+            // {
+            //     if(C_ErrorText != null) StopCoroutine(C_ErrorText);
+            //     C_ErrorText = StartCoroutine(ShowErrorText(new Dictionary<string, string>()
+            //     {
+            //         {ErrorTextField.name, "wrong login"}
+            //     }));
+            // }
         }
         else
         {

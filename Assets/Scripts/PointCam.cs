@@ -8,13 +8,13 @@ public class PointCam : MonoBehaviour
 {
     private Transform _pointCamTransform;
     private Transform _ballTransform;
+    
     private Vector3 _defaultPos;
     private Vector3 _defaultRot;
     private Vector3 _constOffset;
 
     private Vector3 _net1forAngle, _net2forAngle;
 
-    private string _currentBall;
     private PlayerBall _ballScript;
 
     private Vector3 _net1, _net2;
@@ -26,11 +26,6 @@ public class PointCam : MonoBehaviour
     {
         _net1 = GameObject.FindGameObjectsWithTag("ScoreTrigger").Last(x => x.transform.name == "ScoreTriggerLeft").transform.position;
         _net2 = new Vector3(-_net1.x, _net1.y, _net1.z);
-        
-        //  поле осталось еще с тех времен, когда
-        //  на площадке присутствовал один мяч игрока
-        //  и мячи сетевых игроков
-        _ballScript = GameObject.FindObjectOfType<PlayerBall>();
 
         _net1forAngle = new Vector3(_net1.x, 0, 0);
         _net2forAngle = new Vector3(-_net1.x, 0, 0);
@@ -46,7 +41,6 @@ public class PointCam : MonoBehaviour
     public void OnBallGrab(Transform _ball)
     {
         _ballTransform = _ball;
-        _currentBall = _ballTransform.transform.name;
         _ballScript = _ballTransform.GetComponent<PlayerBall>();
     }
 
@@ -61,7 +55,7 @@ public class PointCam : MonoBehaviour
 
         Vector3 Test = new Vector3();
 
-        if(CameraRaycast.IsBoard1)
+        if(CameraRaycast.isBoard1)
         {
             _netPosition = _net1;
 
@@ -72,7 +66,7 @@ public class PointCam : MonoBehaviour
                 Test = new Vector3(Test.x, Test.y, -Test.z);
             }
         }
-        else if(CameraRaycast.IsBoard2)
+        else if(CameraRaycast.isBoard2)
         {
             _netPosition = _net2;
 
@@ -95,10 +89,10 @@ public class PointCam : MonoBehaviour
         }
     }
 
-    public void OnBallThrow(string _newBall)
+    public void OnBallThrow(PlayerBall newBall)
     {
         var GUIScript = GameManager.FindObjectOfType<GUI>();
         _cameraDirection = -(new Vector3(_netPosition.x, 0, _netPosition.z) - new Vector3(_ballTransform.position.x, 0, _ballTransform.position.z)).normalized;
-        if(_newBall == _currentBall) GUIScript.SetActivePointCam(false, null);
+        if(newBall.Equals(_ballScript)) GUIScript.SetActivePointCam(false, null);
     }
 }

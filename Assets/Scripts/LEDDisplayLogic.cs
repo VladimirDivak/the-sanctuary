@@ -96,8 +96,6 @@ public class LEDDisplayLogic : MonoBehaviour
 
         CurrentArtsistName = _trackName[0].ToLower();
 
-        if(GameManager.GameStarted == true) GameObject.FindObjectOfType<ArtistNamePanel>().ShowNewArtistName();
-
         if(_setTrackTime == null)
             _setTrackTime = StartCoroutine(SetTrackTime(_length));
         else

@@ -76,17 +76,17 @@ public class NetworkBall : Ball
     private void OnBallMoving(string playerSessionId, PlayerTransform playerTransform)
     {
         if(playerSessionId != PlayerID) return;
-        DisablePhysic(playerTransform);
+        PhysicDisable(playerTransform);
     }
 
     //  метод вызывается в Network, запускает цепочку методов при броске игроком мяча
     private void OnBallThrowing(string playerSessionId, Force throwForce)
     {
         if(playerSessionId != PlayerID) return;
-        EnablePhysic(throwForce);
+        PhysicEnable(throwForce);
     }
 
-    public void DisablePhysic(PlayerTransform ballTransform)
+    public void PhysicDisable(PlayerTransform ballTransform)
     {
         _lastPosition = new Vector3(ballTransform.X,
             ballTransform.Y,
@@ -117,7 +117,7 @@ public class NetworkBall : Ball
         }
     }
 
-    public void EnablePhysic(Force throwForce)
+    public void PhysicEnable(Force throwForce)
     {
         _transform.position = new Vector3(throwForce.posX, throwForce.posY, throwForce.posZ);
         _transform.rotation = Quaternion.Euler(new Vector3(throwForce.rotX,
@@ -160,7 +160,7 @@ public class NetworkBall : Ball
         StopCheckBallHight();
 
         _ballOnParket = false;
-        ParketHitCount = 0;
+        parketHitCount = 0;
         ballCorrectHigh = false;
     }
 
@@ -172,7 +172,7 @@ public class NetworkBall : Ball
         {
             _ballOnParket = true;
 
-            ParketHitCount++;
+            parketHitCount++;
 
             if(c_ballOnAir != null)
             {

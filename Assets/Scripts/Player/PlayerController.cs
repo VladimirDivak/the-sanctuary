@@ -1,120 +1,169 @@
 ﻿using System.Collections;
 using UnityEngine;
+using System.Linq;
 
-//  данный класс создан для описания логики перемещения игрока
-//
-//  до сих пор ищу решение по наиболее грамотному написанию
-//  movement-компонента для игрока, т.к. описанный мною
-//  вариант даёт рывки при вращении и перемещении,
-//  что было заметно также и в VR-версии проекта
+enum SwipeDirection
+{
+    Left,
+    Right,
+    Up,
+    Down
+}
 
 public class PlayerController : MonoBehaviour
 {
     [SerializeField]
-    public Camera ReflectionCamera;
+    GameObject raycastPosition;
     [SerializeField]
-    public RenderTexture PlanarReflectionTexture;
+    Camera ReflectionCamera;
+    [SerializeField]
+    RenderTexture PlanarReflectionTexture;
 
-    public static Transform ControllerTransform;
-    public static float NetDistance;
+    public static Transform controllerTransform;
+    public static float netDistance;
 
     private Transform _cameraTransform;
     private Transform _reflectionCameraTransform;
-    private Vector3 _cameraForward;
-    private Vector3 _cameraRight;
-
-    private float _mouseSensitivity = 10f;
-
-    private float _cameraYRot;
-    private float _cameraXRot;
-    private float _movingSpeed = 0.18f;
-    private float _lerpConst = 25;
 
     private Vector3 _net = new Vector3(12.779f, 0, 0);
-    private Coroutine _movement;
+
+    private Gyroscope _gyroscope;
+
+    private Vector2 _swipeStart;
+    private Vector2 _swipeEnd;
+
+    private Coroutine c_rotation;
 
     void Awake()
     {
-        PlanarReflectionTexture.height = Screen.height;
-        PlanarReflectionTexture.width = Screen.width;
+        _gyroscope = Input.gyro;
+        _gyroscope.enabled = true;
     }
 
     private void Start()
     {
         _cameraTransform = Camera.main.transform;
-        _reflectionCameraTransform = ReflectionCamera.transform;
-
-        Vector3 StartPosition = new Vector3(8.35f, 0, 0);
-        Quaternion StartRotation = Quaternion.Euler(new Vector3(0, -270, 0));
-        ControllerTransform = this.transform;
+        controllerTransform = transform;
     }
 
-    public void MovementInit(bool isTrue)
+    void Update()
     {
-        if(_movement != null)
-        {
-            StopCoroutine(_movement);
-            _movement = null;
-        }
-        if(isTrue) _movement = StartCoroutine(Movement());
-    }
-
-    private IEnumerator Movement()
-    {
-
-        //  здесь присутствует дублирование кода, знаю...
-        //  пока что просто оставлю как есть, но лучше, конечно,
-        //  менять в этом цикле только знак вектора _net
-        //
-        //  и вообще я не уверен, что писать всё это внутри куротины
-        //  верное решение, но вариантов было использовано несколько
+        if (controllerTransform.position.x < 0)
+            _net *= -1;
         
-        while(true)
+        netDistance = (_net - new Vector3(
+            controllerTransform.position.x,
+            0,
+            controllerTransform.position.z)).magnitude;
+
+        _cameraTransform.localRotation = _gyroscope.attitude * new Quaternion(0, 0, 1, 0);
+
+        if(Input.touches.First().phase == TouchPhase.Ended)
         {
-            _cameraForward = new Vector3(_cameraTransform.forward.x, 0, _cameraTransform.forward.z);
-            _cameraRight = new Vector3(_cameraTransform.right.x, 0, _cameraTransform.right.z);
+            Vector3 touchPosition = Camera.main.ScreenToWorldPoint(Input.touches.First().position);
+            touchPosition = new Vector3(touchPosition.x, touchPosition.y, Camera.main.transform.position.z);
 
+            Debug.DrawLine(touchPosition, touchPosition + Camera.main.transform.forward * 20);
+        }
 
-            if(ControllerTransform.position.x < 0)
-                _net *= -1;
-            
-            NetDistance = (_net - new Vector3(ControllerTransform.position.x, 0, ControllerTransform.position.z)).magnitude;
+        foreach (Touch touch in Input.touches)
+        {
+            if (touch.phase == TouchPhase.Began)
+            {
+                _swipeStart = touch.position;
+            }
 
-            ControllerRotating();
-            ControllerMoving();
+            if (touch.phase == TouchPhase.Ended)
+            {
+                _swipeEnd = touch.position;
+                float horizontalSwipeMagnitude = _swipeEnd.x - _swipeStart.x;
+                float verticalSwipeMagnitude = _swipeEnd.y - _swipeStart.y;
 
+                if (Mathf.Abs(horizontalSwipeMagnitude) > Mathf.Abs(verticalSwipeMagnitude))
+                {
+                    if (Mathf.Abs(horizontalSwipeMagnitude) > 300)
+                    {
+                        if (_swipeEnd.x - _swipeStart.x < 0)
+                        {
+                            StartCoroutine(RotationRoutine(SwipeDirection.Right));
+                        }
+                        else
+                        {
+                            StartCoroutine(RotationRoutine(SwipeDirection.Left));
+                        }
+                    }
+                }
+                else
+                {
+                    if (Mathf.Abs(verticalSwipeMagnitude) > 300)
+                    {
+                        if(_swipeEnd.y - _swipeStart.y < 0)
+                        {
+                            StartCoroutine(MovingRoutine(SwipeDirection.Down));
+                        }
+                        else
+                        {
+                            StartCoroutine(MovingRoutine(SwipeDirection.Up));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    IEnumerator MovingRoutine(SwipeDirection dir)
+    {
+        float lerpProgress = 0;
+        float lerpTime = 8f;
+        float direction = 1f;
+
+        if (dir == SwipeDirection.Down) direction *= -1;
+
+        Vector3 startPosition = controllerTransform.position;
+        Vector3 endPosition = startPosition + new Vector3(
+            _cameraTransform.forward.x * direction,
+            0,
+            _cameraTransform.forward.z * direction
+        ).normalized * 2;
+
+        while(lerpProgress < 1)
+        {
+            controllerTransform.position = Vector3.Lerp(
+                startPosition,
+                endPosition,
+                lerpProgress
+            );
+
+            lerpProgress += lerpTime * Time.deltaTime;
             yield return null;
         }
+
+        controllerTransform.position = endPosition;
+        yield break;
     }
 
-    private void ControllerRotating()
+    IEnumerator RotationRoutine(SwipeDirection dir)
     {
-        float mouseX = Input.GetAxis("Mouse X") * _mouseSensitivity;
-        float mouseY = Input.GetAxis("Mouse Y") * _mouseSensitivity;
+        float lerpProgress = 0;
+        float lerpTime = 8f;
+        Vector3 rotationDir = new Vector3();
+        Vector3 startRotation = controllerTransform.eulerAngles;
 
-        _cameraXRot -= mouseY;
-        _cameraXRot = Mathf.Clamp(_cameraXRot, -90f, 90f);
+        if(dir == SwipeDirection.Left) rotationDir = new Vector3(0, -60, 0);
+        else rotationDir = new Vector3(0, 60, 0);
 
-        _cameraYRot += mouseX;
+        while(lerpProgress < 1)
+        {
+            controllerTransform.rotation = Quaternion.Lerp(
+                Quaternion.Euler(startRotation),
+                Quaternion.Euler(startRotation + rotationDir),
+                lerpProgress
+            );
 
-        var cameraRotation = new Vector3(_cameraXRot, _cameraYRot, 0);
-        var reflectionCameraRotation = new Vector3(-cameraRotation.x, cameraRotation.y, -cameraRotation.z);
+            lerpProgress += lerpTime * Time.deltaTime;
+            yield return null;
+        }
 
-        _cameraTransform.localRotation = Quaternion.Slerp(_cameraTransform.localRotation, Quaternion.Euler(cameraRotation), _lerpConst * Time.deltaTime);
-        _reflectionCameraTransform.localRotation = Quaternion.Slerp(_reflectionCameraTransform.localRotation, Quaternion.Euler(reflectionCameraRotation), _lerpConst * Time.deltaTime);
-    }
-
-    private void ControllerMoving()
-    {
-        float x = Input.GetAxis("Horizontal");
-        float z = Input.GetAxis("Vertical");
-
-        Vector3 TranslateVector = (_cameraForward * z + _cameraRight * x) * _movingSpeed;
-
-        Vector3 newPosition = ControllerTransform.position + TranslateVector;
-        newPosition = new Vector3(Mathf.Clamp(newPosition.x, -15.5f, 15.5f), newPosition.y, Mathf.Clamp(newPosition.z, -7.5f, 7.5f));
-        ControllerTransform.position = Vector3.Lerp(ControllerTransform.position, newPosition, _lerpConst * Time.deltaTime);
-
-        _reflectionCameraTransform.localPosition = new Vector3(0, -_cameraTransform.localPosition.y, 0);
+        yield break;
     }
 }

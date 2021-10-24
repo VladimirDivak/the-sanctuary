@@ -132,7 +132,6 @@ public class BallCustomize : MonoBehaviour
         }
 
         FindObjectOfType<Network>().SendServerData("ServerRegistration", Network.accountData);
-        FindObjectOfType<GUI>().SetFade(5);
     }
 
     void SetChildrenTransformList(Transform objectTransform)

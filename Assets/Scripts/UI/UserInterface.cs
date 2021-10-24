@@ -5,12 +5,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-
-//  данный скрипт описывает работу главного меню игры,
-//  представляющего собой 3D-объекты
 public class UserInterface : MonoBehaviour
 {
-    private DepthOfField _depthOfField;
     private ColorAdjustments _colorAdjustments;
     private ColorCurves _colorCurves;
 
@@ -83,7 +79,6 @@ public class UserInterface : MonoBehaviour
 
         _cameraMainMenu = MainMenuCamera.GetComponent<Camera>();
 
-        VolumeProfile.TryGet(out _depthOfField);
         VolumeProfile.TryGet(out _colorAdjustments);
         VolumeProfile.TryGet(out _colorCurves);
 
@@ -128,7 +123,7 @@ public class UserInterface : MonoBehaviour
         _currentBackgroundMenuPrefab.transform.localPosition = new Vector3(-2, 0, 0);
         // AudioPlayer.BallVizualization(true);
 
-        ChangeDepthOfField(0, 3);
+        // ChangeDepthOfField(0, 3);
         // ChangeSaturation(-100, 3);
 
         BackgroundSceneActivation(true);
@@ -156,15 +151,8 @@ public class UserInterface : MonoBehaviour
         }
 
         Destroy(_currentBackgroundMenuPrefab);
-        // AudioPlayer.BallVizualization(false);
-
-        ChangeDepthOfField(300, 3);
-        // ChangeSaturation(0, 3);
-
         BackgroundSceneActivation(false);
         AbleToShowMenu = true;
-        
-        GUI.ShowGameRoomsPanel(false);
     }
 
     public void OnUIButtonPressed(string ButtonName)
@@ -194,10 +182,9 @@ public class UserInterface : MonoBehaviour
 
         if(isStart)
         {
-            if(GameManager.PlayerController != null && GameManager.PlayerController.activeSelf)
+            if(GameManager.Instance.playerController != null && GameManager.Instance.playerController.gameObject.activeSelf)
             {
-                FindObjectOfType<PlayerController>().MovementInit(false);
-                GameManager.PlayerController.SetActive(false);
+                GameManager.Instance.playerController.gameObject.SetActive(false);
             }
 
             if(C_BackgroundSceneAnimation != null) StopCoroutine(C_BackgroundSceneAnimation);
@@ -214,27 +201,11 @@ public class UserInterface : MonoBehaviour
             BackgroundCameraTransform.SetActive(false);
             MainMenuCamera.SetActive(false);
 
-            if(!GameManager.PlayerController.activeSelf)
+            if(!GameManager.Instance.playerController.gameObject.activeSelf)
             {
-                GameManager.PlayerController.SetActive(true);
-                FindObjectOfType<PlayerController>().MovementInit(true);
+                GameManager.Instance.playerController.gameObject.SetActive(true);
             }
         }
-    }
-
-
-
-
-
-    public void ChangeDepthOfField(float Value, float Time)
-    {
-        if(C_dofChanging != null)
-        {
-            StopCoroutine(C_dofChanging);
-            C_dofChanging = null;
-        }
-
-        C_dofChanging = StartCoroutine(DepthOfFieldChanging(Value, Time));
     }
 
     public void ChangeSaturation(float Value, float Time)
@@ -246,27 +217,6 @@ public class UserInterface : MonoBehaviour
         }
 
         C_SaturationChanging = StartCoroutine(SaturationChanging(Value, Time));
-    }
-
-    private IEnumerator DepthOfFieldChanging(float Value, float LerpTime)
-    {
-        float LerpProc = 0;
-        float BeginValue = _depthOfField.gaussianEnd.value;
-
-        _depthOfField.active = true;
-
-        while(LerpProc < 1)
-        {
-            _depthOfField.gaussianEnd.value = Mathf.Lerp(BeginValue, Value, LerpProc);
-            LerpProc += LerpTime * Time.deltaTime;
-
-            yield return null;
-        }
-
-        _depthOfField.gaussianEnd.value = Value;
-        if(Value > BeginValue) _depthOfField.active = false;
-
-        yield break;
     }
 
     private IEnumerator SaturationChanging(float Value, float LerpTime)
@@ -329,11 +279,6 @@ public class UserInterface : MonoBehaviour
         _colorAdjustments.saturation.value = Value;
     }
 
-    public void SetDoF(float Value)
-    {
-        _depthOfField.gaussianEnd.value = Value;
-    }
-
     private void InitElementsTransform()
     {
         BackgroundCameraTransform.transform.localPosition = _backgroundCameraStartPos;
@@ -367,7 +312,6 @@ public class UserInterface : MonoBehaviour
         switch(ButtonName)
         {
             case "Text_SignIn":
-                GUI.ShowRegistrationPanel(true);
                 FindObjectOfType<RegPanel>().SetFadeEffect("signin");
                 break;
             case "Text_Quit":
@@ -381,7 +325,6 @@ public class UserInterface : MonoBehaviour
                 OnSlideChanged(SlideName, "GameModesSlide");
                 break;
             case "Text_Multiplayer":
-                GUI.ShowGameRoomsPanel(true);
                 break;
         }
 

@@ -49,17 +49,16 @@ public class PlayerBall : Ball
 
     public Vector3 startToFlyPosition;
 
-    private PointCam _pointCamScript;
+    private PointCam _pointCam;
     private BallCustomize _ballCustomize;
 
     void Awake()
     {
         _ballCustomize = FindObjectOfType<BallCustomize>();
         _networkScript = FindObjectOfType<Network>();
-        _pointCamScript = GameObject.FindObjectOfType<PointCam>();
+        _pointCam = GameObject.FindObjectOfType<PointCam>();
 
         _cameraScript = GameObject.Find("Main Camera").GetComponent<CameraRaycast>();
-        //  _guiScript = GameObject.Find("Canvas").GetComponent<GUI>();
         _net1Transform = GameObject.Find("net").transform;
         _net2Transform = GameObject.Find("net (1)").transform;
 
@@ -84,9 +83,9 @@ public class PlayerBall : Ball
 
         magnitude = (netPos - ControllerPos).magnitude;
 
-        if(CameraRaycast.IsBoard1)
+        if(CameraRaycast.isBoard1)
             netPos = new Vector3(_net1Transform.position.x, 0, _net1Transform.position.z);
-        else if(CameraRaycast.IsBoard2)
+        else if(CameraRaycast.isBoard2)
             netPos = new Vector3(_net2Transform.position.x, 0, _net2Transform.position.z);
 
         if(magnitude >= _zone3pt)
@@ -98,7 +97,7 @@ public class PlayerBall : Ball
         {
             Vector3 BallRotation = new Vector3(_controllerTransform.rotation.eulerAngles.x, Camera.main.transform.rotation.eulerAngles.y + 90, _controllerTransform.rotation.eulerAngles.z);
 
-            _transform.position = Vector3.Lerp(_transform.position, CameraRaycast.CameraTransform.position + (CameraRaycast.CameraTransform.forward * 0.5f), 20 * Time.deltaTime);
+            _transform.position = Vector3.Lerp(_transform.position, CameraRaycast.cameraTransform.position + (CameraRaycast.cameraTransform.forward * 0.5f), 20 * Time.deltaTime);
             _transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(BallRotation), 20 * Time.deltaTime);
 
             if(Network.inRoom)
@@ -133,9 +132,10 @@ public class PlayerBall : Ball
         Vector3 throwPosition = _transform.position;
         Vector3 throwRotation = _transform.rotation.eulerAngles;
 
-        ParketHitCount = 0;
+        parketHitCount = 0;
         startToFlyPosition = new Vector3(transform.position.x, 0, transform.position.z);
-        _pointCamScript.OnBallThrow(transform.name);
+
+        _pointCam.OnBallThrow(this);
 
         if(c_chekBallHigh == null)
             c_chekBallHigh = StartCoroutine(ChekHigh());
@@ -144,9 +144,6 @@ public class PlayerBall : Ball
             StopCoroutine(c_chekBallHigh);
             c_chekBallHigh = null;
         }
-
-        // if(_cameraScript.AbleToShowPointCam)
-        //     _guiScript.SetActivePointCam(true, transform);
 
         if(c_changeForceOffset != null)
         {
@@ -178,7 +175,7 @@ public class PlayerBall : Ball
 
         if(_setForceReady)
         {
-            Force = (_cameraScript.ShootPoint.position - _transform.position) * (ForceConst + _forceOffset);
+            Force = (_cameraScript.shootPoint.position - _transform.position) * (ForceConst + _forceOffset);
             var torque = -Camera.main.transform.right * Random.Range(0.2f, 1);
 
             _forceOffset = 0;
@@ -212,7 +209,7 @@ public class PlayerBall : Ball
 
     public void PhysicDisable()
     {
-        _pointCamScript.OnBallGrab(transform);
+        _pointCam.OnBallGrab(transform);
 
         StopCheckBallHight();
 
@@ -230,8 +227,6 @@ public class PlayerBall : Ball
         IsGrabed = true;
 
         _setIK = true;
-
-        CameraRaycast.CurrentBall = transform.name;
     }
 
     protected override void OnCollisionEnter(Collision collision)
@@ -240,11 +235,11 @@ public class PlayerBall : Ball
 
         if(collision.transform.tag == "Parket")
         {
-            _cameraScript.AbleToShowPointCam = false;
-            GameObject.FindObjectOfType<PointCam>().OnBallThrow(this.transform.name);
+            _cameraScript.ableToShowPointCam = false;
+            _pointCam.OnBallThrow(this);
 
-            ParketHitCount++;
-            if(ParketHitCount == 1)
+            parketHitCount++;
+            if(parketHitCount == 1)
             {
                 if(c_ballOnAir != null)
                 {
@@ -260,18 +255,18 @@ public class PlayerBall : Ball
 
     public void BallSetArcadePosition()
     {
-        var CameraRotation = CameraRaycast.CameraTransform.localRotation;
+        var CameraRotation = CameraRaycast.cameraTransform.localRotation;
 
         _rigidBody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
         _rigidBody.isKinematic = true;
 
-        Vector3 target = _net1Transform.position - PlayerController.ControllerTransform.position;
+        Vector3 target = _net1Transform.position - PlayerController.controllerTransform.position;
         CameraRotation = Quaternion.LookRotation(target);
 
-        PlayerController.ControllerTransform.rotation = Quaternion.Euler(new Vector3(0, CameraRotation.eulerAngles.y, 0));
-        CameraRaycast.CameraTransform.localRotation = Quaternion.Euler(new Vector3(CameraRotation.eulerAngles.x, 0, CameraRotation.eulerAngles.z));
+        PlayerController.controllerTransform.rotation = Quaternion.Euler(new Vector3(0, CameraRotation.eulerAngles.y, 0));
+        CameraRaycast.cameraTransform.localRotation = Quaternion.Euler(new Vector3(CameraRotation.eulerAngles.x, 0, CameraRotation.eulerAngles.z));
 
-        _transform.position = CameraRaycast.CameraTransform.position + (CameraRaycast.CameraTransform.forward * 0.9f);
+        _transform.position = CameraRaycast.cameraTransform.position + (CameraRaycast.cameraTransform.forward * 0.9f);
     }
 
     public void SetForceOffset(bool _isStart)
@@ -301,7 +296,7 @@ public class PlayerBall : Ball
     {
         int RandSpeed;
         
-        if(PlayerController.NetDistance < 6.9f)
+        if(PlayerController.netDistance < 6.9f)
         {
             RandSpeed = Random.Range(2, 7);
         }
@@ -312,7 +307,7 @@ public class PlayerBall : Ball
 
         int ForceOffsetMax;
 
-        if(PlayerController.ControllerTransform.position.x != 8.35f)
+        if(PlayerController.controllerTransform.position.x != 8.35f)
             ForceOffsetMax = 2;
         else
             ForceOffsetMax = 5;

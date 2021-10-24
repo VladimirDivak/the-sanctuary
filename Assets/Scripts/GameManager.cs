@@ -6,15 +6,21 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameObject MainCamera;
-    public static GameObject PlayerController;
-    public static GameObject ShootPoint;
+    public static GameManager Instance { get; private set; }
+
+    [HideInInspector]
+    public GameObject cameraMain { get; private set; }
+    [HideInInspector]
+    public PlayerController playerController { get; private set; }
 
     private GUI _guiScript;
 
-    public static bool SetControl = true;
-    public static bool SetMovingControl = true;
-    public static bool GameStarted;
+    [HideInInspector]
+    public bool setControl = true;
+    [HideInInspector]
+    public bool setMovingControl = true;
+    [HideInInspector]
+    public bool gameStarted;
 
     private Vector3 _startCameraPosition;
     private Quaternion _startCameraRotation;
@@ -28,39 +34,44 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        Instance = this;
+
         _guiScript = FindObjectOfType<GUI>();
 
-        _ui = GameObject.FindObjectOfType<UserInterface>();
-        _ui.OnGameMenuEnter();
+        // _ui = GameObject.FindObjectOfType<UserInterface>();
+        // _ui.OnGameMenuEnter();
 
         _netsClothes = GameObject.FindObjectsOfType<Cloth>();
 
-        MainCamera = GameObject.Find("PlayerController/Main Camera");
-        _startCameraPosition = MainCamera.transform.position;
-        _startCameraRotation = MainCamera.transform.rotation;
+        cameraMain = Camera.main.gameObject;
+        
+        _startCameraPosition = cameraMain.transform.position;
+        _startCameraRotation = cameraMain.transform.rotation;
 
-        PlayerController = GameObject.Find("PlayerController");
-        PlayerController.SetActive(false);
+        playerController = FindObjectOfType<PlayerController>();
+        playerController.gameObject.SetActive(false);
 
-        _bgCamera = GameObject.FindObjectOfType<BackgroundCameraAnimation>();
-        _bgCamera.StartBackgroundCameraMoving();
+        // _bgCamera = GameObject.FindObjectOfType<BackgroundCameraAnimation>();
+        // _bgCamera.StartBackgroundCameraMoving();
 
-        GUI.OnFadeOut += InitializationGame;
+        InitializationGame();
     }
 
     public void InitializationGame()
     {
-        Destroy(GameObject.Find("Background"));
-        Destroy(GameObject.Find("LearningPanel"));
-        Destroy(GameObject.Find("LoginPanel"));
-        Destroy(GameObject.Find("BallCustomizePanel"));
+        playerController.gameObject.SetActive(true);
+
+        // Destroy(GameObject.Find("Background"));
+        // Destroy(GameObject.Find("LearningPanel"));
+        // Destroy(GameObject.Find("LoginPanel"));
+        // Destroy(GameObject.Find("BallCustomizePanel"));
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        _ui.OnGameMenuExit();
-        GUI.ShowRegistrationPanel(false);
-        GUI.ShowGameUI(true);
+        // _ui.OnGameMenuExit();
+        // GUI.ShowRegistrationPanel(false);
+        // GUI.ShowGameUI(true);
 
         GameObject.FindObjectOfType<CameraRaycast>().OnGameInit();
 
@@ -78,18 +89,17 @@ public class GameManager : MonoBehaviour
             cloth.sphereColliders = ClothColliders.ToArray();
         }
 
-        GameStarted = true;
-        GameObject.FindObjectOfType<ArtistNamePanel>().ShowNewArtistName();
+        gameStarted = true;
 
-        GUI.OnFadeOut -= InitializationGame;
+        // GUI.OnFadeOut -= InitializationGame;
     }
 
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Escape) && GameStarted)
-        {
-            if(_ui.AbleToShowMenu) _ui.OnGameMenuEnter();
-            else _ui.OnGameMenuExit();
-        }
+        // if(Input.GetKeyDown(KeyCode.Escape) && gameStarted)
+        // {
+        //     if(_ui.AbleToShowMenu) _ui.OnGameMenuEnter();
+        //     else _ui.OnGameMenuExit();
+        // }
     }
 }

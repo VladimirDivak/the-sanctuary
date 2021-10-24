@@ -29,19 +29,6 @@ public class AudioPlayer : MonoBehaviour
     private List<float> _tracksLenght;
     [SerializeField]
     private List<AudioClip> Tracks = new List<AudioClip>();
-    [SerializeField]
-    public GameObject MainMenuBall;
-    private float[] _clipSampleData;
-    [SerializeField]
-    public float UpdateStep = 0.01f;
-    [SerializeField]
-    public int SampleRate = 1024;
-    private float _currentUpdateTime = 0f;
-    public float ClipLoudness;
-    [SerializeField]
-    public float SizeFactor = 20;
-    public float MinSize = 7;
-    public float MaxSize = 9;
 
     private Coroutine C_BallAudioVizualization;
 
@@ -94,7 +81,7 @@ public class AudioPlayer : MonoBehaviour
 
     void Start()
     {
-        SetArtistData();
+        // SetArtistData();
 
         _ledScript = GameObject.Find("LEDText").GetComponent<LEDDisplayLogic>();
         _source = GetComponent<AudioSource>();
@@ -110,20 +97,14 @@ public class AudioPlayer : MonoBehaviour
         _ledScript.SetLEDTrackName(_source.clip.name, _source.clip.length);
         _source.Play();
 
-        BallVizualization(true);
-
         _trackNameText = GetComponentsInChildren<TMP_Text>().First(x => x.name.Contains("Track"));
         _artistNameText = GetComponentsInChildren<TMP_Text>().First(x => x.name.Contains("Artist"));
 
-        SetTrackData(_source.clip.name);
-
-        _clipSampleData = new float[SampleRate];
+        // SetTrackData(_source.clip.name);
     }
 
     public void OnNextTrack()
     {
-        BallVizualization(false);
-
         _source.Stop();
 
         if(_tracksLenght.IndexOf(_source.clip.length) != _tracksLenght.Count - 1)
@@ -134,15 +115,11 @@ public class AudioPlayer : MonoBehaviour
         _ledScript.SetLEDTrackName(_source.clip.name, _source.clip.length);
         _source.Play();
 
-        SetTrackData(_source.clip.name);
-
-        BallVizualization(true);
+        // SetTrackData(_source.clip.name);
     }
 
     public void OnPreviewTrack()
     {
-        BallVizualization(false);
-
         _source.Stop();
 
         if(_tracksLenght.IndexOf(_source.clip.length) != 0)
@@ -153,53 +130,7 @@ public class AudioPlayer : MonoBehaviour
         _ledScript.SetLEDTrackName(_source.clip.name, _source.clip.length);
         _source.Play();
 
-        SetTrackData(_source.clip.name);
-
-        BallVizualization(true);
-    }
-
-    public void BallVizualization(bool Play)
-    {
-        if(C_BallAudioVizualization != null)
-        {
-            StopCoroutine(C_BallAudioVizualization);
-            C_BallAudioVizualization = null;
-        }   
-
-        if(Play)
-        {
-            C_BallAudioVizualization = StartCoroutine(BallVizualization());
-        }
-    }
-
-    //  метод описывает поведения фонового мяча на заднем плане главного меню
-    //  в зависимости от преобладания в треке низких частот
-    private IEnumerator BallVizualization()
-    {
-        yield return null;
-        while(true)
-        {
-            _currentUpdateTime += Time.deltaTime;
-            if(_currentUpdateTime >= UpdateStep)
-            {
-                _currentUpdateTime = 0;
-                _source.clip.GetData(_clipSampleData, _source.timeSamples);
-                ClipLoudness = 0;
-
-                foreach(var sample in _clipSampleData)
-                {
-                    ClipLoudness += Mathf.Abs(sample);
-                }
-
-                ClipLoudness /= SampleRate;
-                ClipLoudness *= SizeFactor;
-                ClipLoudness = Mathf.Clamp(ClipLoudness, MinSize, MaxSize);
-
-                MainMenuBall.transform.localScale = Vector3.Lerp(MainMenuBall.transform.localScale, new Vector3(1, 1, 1) * ClipLoudness, Time.deltaTime);
-            }
-
-            yield return null;
-        }
+        // SetTrackData(_source.clip.name);
     }
 
     private void SetTrackData(string TrackName)
