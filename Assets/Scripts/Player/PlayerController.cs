@@ -13,8 +13,6 @@ enum SwipeDirection
 public class PlayerController : MonoBehaviour
 {
     [SerializeField]
-    GameObject raycastPosition;
-    [SerializeField]
     Camera ReflectionCamera;
     [SerializeField]
     RenderTexture PlanarReflectionTexture;
@@ -58,52 +56,62 @@ public class PlayerController : MonoBehaviour
 
         _cameraTransform.localRotation = _gyroscope.attitude * new Quaternion(0, 0, 1, 0);
 
-        if(Input.touches.First().phase == TouchPhase.Ended)
+        if(Input.touches.Length > 0)
         {
-            Vector3 touchPosition = Camera.main.ScreenToWorldPoint(Input.touches.First().position);
-            touchPosition = new Vector3(touchPosition.x, touchPosition.y, Camera.main.transform.position.z);
-
-            Debug.DrawLine(touchPosition, touchPosition + Camera.main.transform.forward * 20);
-        }
-
-        foreach (Touch touch in Input.touches)
-        {
-            if (touch.phase == TouchPhase.Began)
+            Touch firstTouch = Input.GetTouch(0);
+            if(firstTouch.phase == TouchPhase.Began)
             {
-                _swipeStart = touch.position;
-            }
+                Vector3 touchScreenPosition = firstTouch.rawPosition;
+                Ray ray = Camera.main.ScreenPointToRay(firstTouch.position);
 
-            if (touch.phase == TouchPhase.Ended)
-            {
-                _swipeEnd = touch.position;
-                float horizontalSwipeMagnitude = _swipeEnd.x - _swipeStart.x;
-                float verticalSwipeMagnitude = _swipeEnd.y - _swipeStart.y;
-
-                if (Mathf.Abs(horizontalSwipeMagnitude) > Mathf.Abs(verticalSwipeMagnitude))
+                if(Physics.Raycast(ray, out RaycastHit hitData, Mathf.Infinity))
                 {
-                    if (Mathf.Abs(horizontalSwipeMagnitude) > 300)
+                    if(hitData.transform.TryGetComponent<PlayerButton>(out var button))
                     {
-                        if (_swipeEnd.x - _swipeStart.x < 0)
-                        {
-                            StartCoroutine(RotationRoutine(SwipeDirection.Right));
-                        }
-                        else
-                        {
-                            StartCoroutine(RotationRoutine(SwipeDirection.Left));
-                        }
+                        button.OnTriggerHasRaycst?.Invoke();
                     }
                 }
-                else
+            }
+
+            foreach (Touch touch in Input.touches)
+            {
+                if (touch.phase == TouchPhase.Began)
                 {
-                    if (Mathf.Abs(verticalSwipeMagnitude) > 300)
+                    _swipeStart = touch.position;
+                }
+
+                if (touch.phase == TouchPhase.Ended)
+                {
+                    _swipeEnd = touch.position;
+                    float horizontalSwipeMagnitude = _swipeEnd.x - _swipeStart.x;
+                    float verticalSwipeMagnitude = _swipeEnd.y - _swipeStart.y;
+
+                    if (Mathf.Abs(horizontalSwipeMagnitude) > Mathf.Abs(verticalSwipeMagnitude))
                     {
-                        if(_swipeEnd.y - _swipeStart.y < 0)
+                        if (Mathf.Abs(horizontalSwipeMagnitude) > 300)
                         {
-                            StartCoroutine(MovingRoutine(SwipeDirection.Down));
+                            if (_swipeEnd.x - _swipeStart.x < 0)
+                            {
+                                StartCoroutine(RotationRoutine(SwipeDirection.Right));
+                            }
+                            else
+                            {
+                                StartCoroutine(RotationRoutine(SwipeDirection.Left));
+                            }
                         }
-                        else
+                    }
+                    else
+                    {
+                        if (Mathf.Abs(verticalSwipeMagnitude) > 300)
                         {
-                            StartCoroutine(MovingRoutine(SwipeDirection.Up));
+                            if(_swipeEnd.y - _swipeStart.y < 0)
+                            {
+                                StartCoroutine(MovingRoutine(SwipeDirection.Down));
+                            }
+                            else
+                            {
+                                StartCoroutine(MovingRoutine(SwipeDirection.Up));
+                            }
                         }
                     }
                 }

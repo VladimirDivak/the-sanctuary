@@ -9,17 +9,6 @@ using System;
 using TheSanctuary;
 using Newtonsoft.Json;
 
-//  да, знаю, что такие слова в названии класса, как
-//  "Logic", "Master", "Manager" и т.д. - дурной тон,
-//  но скрипт писался около года назад, по этому остался
-//  в первоначальном виде во многом
-//
-//  данный класс создан для управления логикой игрового
-//  музыкального плеера
-//
-//  сейчас работаю над подгрузкой данных с сервера,
-//  и с большой вероятностью скрип сильно изменится в ближайшее время
-
 [RequireComponent(typeof(AudioSource))]
 public class AudioPlayer : MonoBehaviour
 {
@@ -47,6 +36,8 @@ public class AudioPlayer : MonoBehaviour
     public Material[] NetworksMaterial;
 
     private List<Artist> _artists = new List<Artist>();
+
+    private bool _ableToChangeTrack = true;
 
     public AudioSource GetAudioSource()
     {
@@ -105,6 +96,9 @@ public class AudioPlayer : MonoBehaviour
 
     public void OnNextTrack()
     {
+        if(!_ableToChangeTrack) return;
+        StartCoroutine(AbleToChangeTrackRoutine());
+
         _source.Stop();
 
         if(_tracksLenght.IndexOf(_source.clip.length) != _tracksLenght.Count - 1)
@@ -120,6 +114,9 @@ public class AudioPlayer : MonoBehaviour
 
     public void OnPreviewTrack()
     {
+        if(!_ableToChangeTrack) return;
+        StartCoroutine(AbleToChangeTrackRoutine());
+
         _source.Stop();
 
         if(_tracksLenght.IndexOf(_source.clip.length) != 0)
@@ -178,6 +175,13 @@ public class AudioPlayer : MonoBehaviour
             DataObjectMaterial = NetworksMaterial.First(x => x.name.Contains(item.Key));
             NetworkDataObject.GetComponentInChildren<MeshRenderer>().material = DataObjectMaterial;
         }
+    }
+
+    IEnumerator AbleToChangeTrackRoutine()
+    {
+        _ableToChangeTrack = false;
+        yield return new WaitForSeconds(1.5f);
+        _ableToChangeTrack = true;
     }
 
     //  находится в разработке
