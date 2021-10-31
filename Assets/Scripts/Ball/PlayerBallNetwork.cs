@@ -4,44 +4,25 @@ using UnityEngine;
 using TheSanctuary;
 using System.Linq;
 
-//  данный класс описывает поведение баскетбольного мяча других игроков в игре
-//
-//  в идеале стоит не делить логику поведения мяча клиента и мячей
-//  сетевых игроков, а создать общий интерфейс, чтобы при попадании
-//  мяча в кольцо триггер не пытался получить компонент скрипта того
-//  или иного типа мяча
-//
-//  данный скрипт был описан мной практически в начале работы над этим
-//  проектом, по этому здесь имеется несколько спорных решений, которые
-//  в дальнейшем я намерен изменить
-
-public class NetworkBall : Ball
+public class PlayerBallNetwork : Ball
 {
     public string PlayerID;
     private Player _playerData;
-
     public string PlayerName => _playerData.login;
-
     private Coroutine c_ballGrabing;
+    private PlayerTransform _playerTransform;
 
+    public PlayerTransform networkTransform;
+    public Force forceData;
 
-    // private GUI _gui;
-    // private Camera _mainCamera;
-
-    private void Start()
+    protected override void Start()
     {
-        _transform = transform;
-        _bouncesSource = GetComponent<AudioSource>();
-        _rigidBody = GetComponent<Rigidbody>();
-
         Network.OnBallMovingEvent += OnBallMoving;
         Network.OnBallThrowingEvent += OnBallThrowing;
 
         FindObjectOfType<GameManager>().ClothColliders.Add(new ClothSphereColliderPair(GetComponent<SphereCollider>(), GetComponent<SphereCollider>()));
     }
 
-    //  метод вызывается в ObjectSpawner'е и инициализирует полученные с сервера
-    //  данные: ID текущей сессии, персональные данные клиента, его статус готовности к игре
     public void SetNetworkBallData(string id, PersonalData data, bool readyStatus)
     {
         PlayerID = id;
@@ -71,15 +52,13 @@ public class NetworkBall : Ball
         material.SetInt(BallCustomize.useNetworkFresnelID, 1);
     }
 
-    //  метод вызывается в Network и запускает цепочку методов, которые описывают
-    //  логику перемещения мяча
-    private void OnBallMoving(string playerSessionId, PlayerTransform playerTransform)
+    private void OnBallMoving(string playerSessionId, PlayerTransform ballTransform)
     {
         if(playerSessionId != PlayerID) return;
-        PhysicDisable(playerTransform);
+
+        PhysicDisable(ballTransform);
     }
 
-    //  метод вызывается в Network, запускает цепочку методов при броске игроком мяча
     private void OnBallThrowing(string playerSessionId, Force throwForce)
     {
         if(playerSessionId != PlayerID) return;
@@ -167,19 +146,6 @@ public class NetworkBall : Ball
     protected override void OnCollisionEnter(Collision collision)
     {
         base.OnCollisionEnter(collision);
-
-        if(collision.transform.tag == "Parket")
-        {
-            _ballOnParket = true;
-
-            parketHitCount++;
-
-            if(c_ballOnAir != null)
-            {
-                StopCoroutine(c_ballOnAir);
-                c_ballOnAir = null;
-            }
-        }
     }
 
     private IEnumerator BallMoving()

@@ -20,7 +20,7 @@ public class PlayerController : MonoBehaviour
     public static Transform controllerTransform;
     public static float netDistance;
 
-    private Transform _cameraTransform;
+    public Transform cameraTransform { get; private set; }
     private Transform _reflectionCameraTransform;
 
     private Vector3 _net = new Vector3(12.779f, 0, 0);
@@ -40,7 +40,7 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        _cameraTransform = Camera.main.transform;
+        cameraTransform = Camera.main.transform;
         controllerTransform = transform;
     }
 
@@ -54,7 +54,7 @@ public class PlayerController : MonoBehaviour
             0,
             controllerTransform.position.z)).magnitude;
 
-        _cameraTransform.localRotation = _gyroscope.attitude * new Quaternion(0, 0, 1, 0);
+        cameraTransform.localRotation = _gyroscope.attitude * new Quaternion(0, 0, 1, 0);
 
         if(Input.touches.Length > 0)
         {
@@ -66,7 +66,7 @@ public class PlayerController : MonoBehaviour
 
                 if(Physics.Raycast(ray, out RaycastHit hitData, Mathf.Infinity))
                 {
-                    if(hitData.transform.TryGetComponent<PlayerButton>(out var button))
+                    if(hitData.transform.TryGetComponent<RaycastEventHandler>(out var button))
                     {
                         button.OnTriggerHasRaycst?.Invoke();
                     }
@@ -129,10 +129,16 @@ public class PlayerController : MonoBehaviour
 
         Vector3 startPosition = controllerTransform.position;
         Vector3 endPosition = startPosition + new Vector3(
-            _cameraTransform.forward.x * direction,
+            cameraTransform.forward.x * direction,
             0,
-            _cameraTransform.forward.z * direction
+            cameraTransform.forward.z * direction
         ).normalized * 2;
+
+        endPosition = new Vector3(
+            Mathf.Clamp(endPosition.x, -15.5f, 15.5f),
+            endPosition.y,
+            Mathf.Clamp(endPosition.z, -7.5f, 7.5f)
+        );
 
         while(lerpProgress < 1)
         {

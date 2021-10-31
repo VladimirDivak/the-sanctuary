@@ -75,7 +75,7 @@ public class GameManager : MonoBehaviour
 
         GameObject.FindObjectOfType<CameraRaycast>().OnGameInit();
 
-        FindObjectOfType<ObjectSpawner>().SpawnBall(Network.accountData, new Vector3(12.369f, 1.23f, -1.345f));
+        // FindObjectOfType<ObjectSpawner>().SpawnBall(Network.accountData, new Vector3(12.369f, 1.23f, -1.345f));
 
         var Balls = GameObject.FindGameObjectsWithTag("Ball");
         foreach(var Ball in Balls)

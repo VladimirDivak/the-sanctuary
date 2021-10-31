@@ -2,19 +2,24 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(AudioSource))]
 public class Ball : MonoBehaviour
 {
     [SerializeField]
     private protected List<AudioClip> BouncesSound = new List<AudioClip>();
 
     private protected Transform _transform;
-
     private protected Rigidbody _rigidBody;
     private protected AudioSource _bouncesSource;
 
+    [HideInInspector]
     public bool onAir;
+    [HideInInspector]
     public bool itsPoint;
+    [HideInInspector]
     public bool isGrabed;
+    [HideInInspector]
     public bool ballCorrectHigh;
 
     private protected bool _ballOnParket;
@@ -27,6 +32,13 @@ public class Ball : MonoBehaviour
 
     private protected Vector3 _lastPosition;
     private protected Quaternion _lastRotation;
+
+    protected virtual void Start()
+    {
+        _transform = transform;
+        _rigidBody = GetComponent<Rigidbody>();
+        _bouncesSource = GetComponent<AudioSource>();
+    }
 
     public void StopCheckBallHight()
     {
@@ -43,7 +55,38 @@ public class Ball : MonoBehaviour
         {
             _bouncesSource.clip = BouncesSound[Random.Range(0, BouncesSound.Count)];
             _bouncesSource.Play();
+
+            if(collision.transform.tag == "Parket")
+            {
+                _ballOnParket = true;
+                parketHitCount++;
+
+                if(c_ballOnAir != null)
+                {
+                    StopCoroutine(c_ballOnAir);
+                    c_ballOnAir = null;
+                }
+            }
         }
+    }
+
+    public virtual void PhysicEnable()
+    {
+        isGrabed = false;
+        onAir = true;
+
+        _rigidBody.isKinematic = false;
+        _rigidBody.detectCollisions = true;
+    }
+    public virtual void PhysicDisable()
+    {
+        parketHitCount = 0;
+
+        isGrabed = true;
+        onAir = false;
+
+        _rigidBody.isKinematic = true;
+        _rigidBody.detectCollisions = false;
     }
 
     protected IEnumerator ChekHigh()

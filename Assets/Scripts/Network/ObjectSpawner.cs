@@ -59,7 +59,7 @@ public class ObjectSpawner : MonoBehaviour
         try
         {
             var disconnectPlayerBall = _networkBallArray.Find(x => x.name == playerSessionId);
-            var networkBallScript = disconnectPlayerBall.GetComponent<NetworkBall>();
+            var networkBallScript = disconnectPlayerBall.GetComponent<PlayerBallNetwork>();
 
             if(playerSessionId == RoomCreatorID)
             {
@@ -112,20 +112,20 @@ public class ObjectSpawner : MonoBehaviour
     {
         
         var newBall = Instantiate(NetworkBall, new Vector3(0, 1.5f, 0), Quaternion.identity);
-        newBall.GetComponent<NetworkBall>().SetNetworkBallData(playerSessionID, playerData, playerReadyStatus);
+        newBall.GetComponent<PlayerBallNetwork>().SetNetworkBallData(playerSessionID, playerData, playerReadyStatus);
 
         _networkBallArray.Add(newBall);
     }
 
-    public void SpawnBall(Account myData, Vector3 position)
-    {
-        var newMyBall = Instantiate(MyBall, position, Quaternion.identity);
-        newMyBall.GetComponent<PlayerBall>().SetBallOutlook(MyBallMaterial);
+    // public void SpawnBall(Account myData, Vector3 position)
+    // {
+    //     var newMyBall = Instantiate(MyBall, position, Quaternion.identity);
+    //     newMyBall.GetComponent<PlayerBall>().SetBallOutlook(MyBallMaterial);
 
-        if(FindObjectsOfType<PlayerBall>().Length <= 1)
-        {
-            var backgroundBall = GameObject.Find("Background Ball");
-            backgroundBall.GetComponent<Renderer>().material = MyBallMaterial;
-        }
-    }
+    //     if(FindObjectsOfType<PlayerBall>().Length <= 1)
+    //     {
+    //         var backgroundBall = GameObject.Find("Background Ball");
+    //         backgroundBall.GetComponent<Renderer>().material = MyBallMaterial;
+    //     }
+    // }
 }

@@ -82,11 +82,11 @@ public class ShootPointLogic : MonoBehaviour
                 PointTransform.position = _positionConst;
                 _backToConst = false;
             }
-            if(_ballScript.isZone3pt)
-            {
-                _distanceK = 0.5f;
-                _y = 4.8f;
-            }
+            // if(_ballScript.isZone3pt)
+            // {
+            //     _distanceK = 0.5f;
+            //     _y = 4.8f;
+            // }
             else
             {
                 _distanceK = 0.35f;
