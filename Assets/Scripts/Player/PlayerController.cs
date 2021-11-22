@@ -2,125 +2,107 @@
 using UnityEngine;
 using System.Linq;
 
-enum SwipeDirection
-{
+enum SwipeDirection {
     Left,
     Right,
     Up,
     Down
 }
 
-public class PlayerController : MonoBehaviour
-{
-    [SerializeField]
-    Camera ReflectionCamera;
-    [SerializeField]
-    RenderTexture PlanarReflectionTexture;
+public class PlayerController : MonoBehaviour {
+
+    public static Vector2 firstTouchPosition { get; private set; }
+    public static Vector2 lastTouchPosition { get; private set; }
 
     public static Transform controllerTransform;
     public static float netDistance;
 
+    [HideInInspector]
     public Transform cameraTransform { get; private set; }
-    private Transform _reflectionCameraTransform;
 
-    private Vector3 _net = new Vector3(12.779f, 0, 0);
+    Vector3 _net = new Vector3(12.779f, 0, 0);
 
-    private Gyroscope _gyroscope;
+    Gyroscope _gyroscope;
 
-    private Vector2 _swipeStart;
-    private Vector2 _swipeEnd;
+    Vector2 _swipeStart;
+    Vector2 _swipeEnd;
 
-    private Coroutine c_rotation;
+    Coroutine c_rotation;
 
-    void Awake()
-    {
+    void Awake() {
         _gyroscope = Input.gyro;
         _gyroscope.enabled = true;
     }
 
-    private void Start()
-    {
+    private void Start() {
         cameraTransform = Camera.main.transform;
         controllerTransform = transform;
     }
 
-    void Update()
-    {
-        if (controllerTransform.position.x < 0)
-            _net *= -1;
+    void Update() {
+        if (controllerTransform.position.x < 0) _net *= -1;
         
-        netDistance = (_net - new Vector3(
-            controllerTransform.position.x,
-            0,
-            controllerTransform.position.z)).magnitude;
+        netDistance = (
+            _net - new Vector3 (
+                controllerTransform.position.x,
+                0,
+                controllerTransform.position.z
+            )
+        ).magnitude;
 
         cameraTransform.localRotation = _gyroscope.attitude * new Quaternion(0, 0, 1, 0);
 
-        if(Input.touches.Length > 0)
-        {
-            Touch firstTouch = Input.GetTouch(0);
-            if(firstTouch.phase == TouchPhase.Began)
-            {
-                Vector3 touchScreenPosition = firstTouch.rawPosition;
-                Ray ray = Camera.main.ScreenPointToRay(firstTouch.position);
-
-                if(Physics.Raycast(ray, out RaycastHit hitData, Mathf.Infinity))
-                {
-                    if(hitData.transform.TryGetComponent<RaycastEventHandler>(out var button))
-                    {
-                        button.OnTriggerHasRaycst?.Invoke();
-                    }
-                }
-            }
-
-            foreach (Touch touch in Input.touches)
-            {
-                if (touch.phase == TouchPhase.Began)
-                {
+        if(Input.touches.Length > 0) {
+            foreach (Touch touch in Input.touches) {
+                if (touch.phase == TouchPhase.Began) {
                     _swipeStart = touch.position;
+                    firstTouchPosition = touch.position;
+
+                    Vector3 touchScreenPosition = touch.rawPosition;
+                    Ray ray = Camera.main.ScreenPointToRay(touch.position);
+
+                    if(Physics.Raycast(ray, out RaycastHit hitData, Mathf.Infinity)) {
+                        if(hitData.transform.TryGetComponent<RaycastEventHandler>(out var item)) {
+                            item.OnTriggerHasRaycst?.Invoke();
+                        }
+                    }
+
+                    continue;
                 }
 
-                if (touch.phase == TouchPhase.Ended)
-                {
+                if (touch.phase == TouchPhase.Ended) {
                     _swipeEnd = touch.position;
                     float horizontalSwipeMagnitude = _swipeEnd.x - _swipeStart.x;
                     float verticalSwipeMagnitude = _swipeEnd.y - _swipeStart.y;
 
-                    if (Mathf.Abs(horizontalSwipeMagnitude) > Mathf.Abs(verticalSwipeMagnitude))
-                    {
-                        if (Mathf.Abs(horizontalSwipeMagnitude) > 300)
-                        {
-                            if (_swipeEnd.x - _swipeStart.x < 0)
-                            {
+                    if (Mathf.Abs(horizontalSwipeMagnitude) > Mathf.Abs(verticalSwipeMagnitude)) {
+                        if (Mathf.Abs(horizontalSwipeMagnitude) > 150) {
+                            if (_swipeEnd.x - _swipeStart.x < 0) {
                                 StartCoroutine(RotationRoutine(SwipeDirection.Right));
                             }
-                            else
-                            {
+                            else {
                                 StartCoroutine(RotationRoutine(SwipeDirection.Left));
                             }
                         }
                     }
-                    else
-                    {
-                        if (Mathf.Abs(verticalSwipeMagnitude) > 300)
-                        {
-                            if(_swipeEnd.y - _swipeStart.y < 0)
-                            {
-                                StartCoroutine(MovingRoutine(SwipeDirection.Down));
-                            }
-                            else
-                            {
+                    else {
+                        if (Mathf.Abs(verticalSwipeMagnitude) > 150) {
+                            if(_swipeEnd.y - _swipeStart.y < 0) {
                                 StartCoroutine(MovingRoutine(SwipeDirection.Up));
+                            }
+                            else {
+                                StartCoroutine(MovingRoutine(SwipeDirection.Down));
                             }
                         }
                     }
                 }
             }
+
+            lastTouchPosition = Input.touches.Last().position;
         }
     }
 
-    IEnumerator MovingRoutine(SwipeDirection dir)
-    {
+    IEnumerator MovingRoutine(SwipeDirection dir) {
         float lerpProgress = 0;
         float lerpTime = 8f;
         float direction = 1f;
@@ -140,8 +122,7 @@ public class PlayerController : MonoBehaviour
             Mathf.Clamp(endPosition.z, -7.5f, 7.5f)
         );
 
-        while(lerpProgress < 1)
-        {
+        while(lerpProgress < 1) {
             controllerTransform.position = Vector3.Lerp(
                 startPosition,
                 endPosition,
@@ -156,8 +137,7 @@ public class PlayerController : MonoBehaviour
         yield break;
     }
 
-    IEnumerator RotationRoutine(SwipeDirection dir)
-    {
+    IEnumerator RotationRoutine(SwipeDirection dir) {
         float lerpProgress = 0;
         float lerpTime = 8f;
         Vector3 rotationDir = new Vector3();
@@ -166,8 +146,7 @@ public class PlayerController : MonoBehaviour
         if(dir == SwipeDirection.Left) rotationDir = new Vector3(0, -60, 0);
         else rotationDir = new Vector3(0, 60, 0);
 
-        while(lerpProgress < 1)
-        {
+        while(lerpProgress < 1) {
             controllerTransform.rotation = Quaternion.Lerp(
                 Quaternion.Euler(startRotation),
                 Quaternion.Euler(startRotation + rotationDir),
