@@ -1,11 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(AudioSource))]
-public class Ball : MonoBehaviour
-{
+public class Ball : MonoBehaviour {
     [SerializeField]
     private protected List<AudioClip> BouncesSound = new List<AudioClip>();
 
@@ -33,36 +33,29 @@ public class Ball : MonoBehaviour
     private protected Vector3 _lastPosition;
     private protected Quaternion _lastRotation;
 
-    protected virtual void Start()
-    {
+    protected virtual void Start() {
         _transform = transform;
         _rigidBody = GetComponent<Rigidbody>();
         _bouncesSource = GetComponent<AudioSource>();
     }
 
-    public void StopCheckBallHight()
-    {
-        if(c_chekBallHigh != null)
-        {
+    public void StopCheckBallHight() {
+        if(c_chekBallHigh != null) {
             StopCoroutine(c_chekBallHigh);
             c_chekBallHigh = null;
         }
     }
 
-    protected virtual void OnCollisionEnter(Collision collision)
-    {
-        if(collision.relativeVelocity.magnitude > 0.1f)
-        {
+    protected virtual void OnCollisionEnter(Collision collision) {
+        if (collision.relativeVelocity.magnitude > 0.1f) {
             _bouncesSource.clip = BouncesSound[Random.Range(0, BouncesSound.Count)];
             _bouncesSource.Play();
 
-            if(collision.transform.tag == "Parket")
-            {
+            if (collision.transform.tag == "Parket") {
                 _ballOnParket = true;
                 parketHitCount++;
 
-                if(c_ballOnAir != null)
-                {
+                if (c_ballOnAir != null) {
                     StopCoroutine(c_ballOnAir);
                     c_ballOnAir = null;
                 }
@@ -70,32 +63,29 @@ public class Ball : MonoBehaviour
         }
     }
 
-    public virtual void PhysicEnable()
-    {
-        isGrabed = false;
-        onAir = true;
+    public virtual void PhysicEnable() {
+        StopCheckBallHight();
+        c_chekBallHigh = StartCoroutine(ChekHigh());
 
+        onAir = true;
         _rigidBody.isKinematic = false;
-        _rigidBody.detectCollisions = true;
+
+        isGrabed = false;
     }
-    public virtual void PhysicDisable()
-    {
+    public virtual void PhysicDisable() {
+        StopCheckBallHight();
+
         parketHitCount = 0;
+        onAir = false;
+        _rigidBody.isKinematic = true;
 
         isGrabed = true;
-        onAir = false;
-
-        _rigidBody.isKinematic = true;
-        _rigidBody.detectCollisions = false;
     }
 
-    protected IEnumerator ChekHigh()
-    {
-        while(true)
-        {
+    protected IEnumerator ChekHigh() {
+        while(true) {
             yield return null;
-            if(_transform.position.y >= 2.8f)
-            {
+            if(_transform.position.y >= 2.8f) {
                 ballCorrectHigh = true;
                 break;
             }
@@ -103,17 +93,14 @@ public class Ball : MonoBehaviour
         yield break;
     }
 
-    protected IEnumerator WaitingBallOnAir()
-    {
+    protected IEnumerator WaitingBallOnAir() {
         int count = 0;
 
-        while(_ballOnParket == false)
-        {
+        while(_ballOnParket == false) {
             yield return new WaitForSeconds(1);
             count++;
             
-            if(count == 10)
-            {
+            if(count == 10) {
                 _rigidBody.AddForce(new Vector3(2,2,0), ForceMode.Impulse);
                 break;
             }

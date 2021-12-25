@@ -20,14 +20,15 @@ public class PlayerController : MonoBehaviour {
     [HideInInspector]
     public Transform cameraTransform { get; private set; }
 
+    [SerializeField, Range(-1, 1)]
+    float X, Y, Z, W;
+
     Vector3 _net = new Vector3(12.779f, 0, 0);
-
     Gyroscope _gyroscope;
-
     Vector2 _swipeStart;
     Vector2 _swipeEnd;
-
     Coroutine c_rotation;
+    PlayerBall _currentBall;
 
     void Awake() {
         _gyroscope = Input.gyro;
@@ -50,7 +51,13 @@ public class PlayerController : MonoBehaviour {
             )
         ).magnitude;
 
-        cameraTransform.localRotation = _gyroscope.attitude * new Quaternion(0, 0, 1, 0);
+        cameraTransform.localRotation = new Quaternion
+        (
+            _gyroscope.attitude.x,
+            _gyroscope.attitude.y,
+            -_gyroscope.attitude.z,
+            -_gyroscope.attitude.w
+        );
 
         if(Input.touches.Length > 0) {
             foreach (Touch touch in Input.touches) {
@@ -62,7 +69,18 @@ public class PlayerController : MonoBehaviour {
                     Ray ray = Camera.main.ScreenPointToRay(touch.position);
 
                     if(Physics.Raycast(ray, out RaycastHit hitData, Mathf.Infinity)) {
-                        if(hitData.transform.TryGetComponent<RaycastEventHandler>(out var item)) {
+                        if (hitData.transform.TryGetComponent<PlayerBall>(out var myBall)) {
+                            _currentBall = myBall;
+                            if (!myBall.isGrabed) {
+                                _currentBall.PhysicDisable();
+                            }
+
+                            else {
+                                _currentBall.ShootingModeInit();
+                            }
+                        }
+
+                        else if (hitData.transform.TryGetComponent<RaycastEventHandler>(out var item)) {
                             item.OnTriggerHasRaycst?.Invoke();
                         }
                     }
@@ -70,7 +88,14 @@ public class PlayerController : MonoBehaviour {
                     continue;
                 }
 
-                if (touch.phase == TouchPhase.Ended) {
+                else if (touch.phase == TouchPhase.Ended) {
+                    if (_currentBall != null && _currentBall.shootingMode) {
+                        _currentBall.PhysicEnable();
+                        _currentBall = null;
+
+                        break;
+                    }
+
                     _swipeEnd = touch.position;
                     float horizontalSwipeMagnitude = _swipeEnd.x - _swipeStart.x;
                     float verticalSwipeMagnitude = _swipeEnd.y - _swipeStart.y;
