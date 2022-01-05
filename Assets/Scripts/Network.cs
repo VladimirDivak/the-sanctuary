@@ -51,7 +51,7 @@ public class Network : MonoBehaviour
 
     void Start()
     {
-        StartNetworkConnection();
+        // StartNetworkConnection();
         if(_connection.State == HubConnectionState.Connected)
             SendServerData("ServerGetRoomsList");
     }    

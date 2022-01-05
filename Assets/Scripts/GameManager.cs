@@ -35,74 +35,9 @@ public class GameManager : MonoBehaviour
 
     private UserInterface _ui;
 
-    private Scene _simulationScene;
-    private PhysicsScene _physicsScene;
-    Vector3 _lastForce;
-
-    [SerializeField]
-    GameObject simulationBall;
-    [SerializeField]
-    GameObject[] transformsForPhysicsSimulation;
-
-    GameObject _currentSimulationBall;
-
-    public void CreatePhysicsSimulationScene()
-    {
-        _simulationScene = SceneManager.CreateScene("Simulation", new CreateSceneParameters(LocalPhysicsMode.Physics3D));
-        _physicsScene = _simulationScene.GetPhysicsScene();
-
-        foreach(var transformData in transformsForPhysicsSimulation)
-        {
-            var obj = Instantiate(transformData.gameObject, transformData.transform.position, transformData.transform.rotation);
-            if(obj.TryGetComponent<MeshRenderer>(out var meshRendererData)) meshRendererData.enabled = false;
-
-            SceneManager.MoveGameObjectToScene(obj, _simulationScene);
-        }
-
-        _currentSimulationBall = Instantiate(simulationBall, Vector3.zero, Quaternion.identity);
-        SceneManager.MoveGameObjectToScene(_currentSimulationBall, _simulationScene);
-    }
-
-    public Vector3[] SimulateTrajectory(Transform ballTransform, Vector3 force, ForceMode forceMode)
-    {
-        List<Vector3> points = new List<Vector3>();
-        var rb = _currentSimulationBall.GetComponent<Rigidbody>();
-        rb.velocity = Vector3.zero;
-        var collider = _currentSimulationBall.GetComponent<SphereCollider>();
-
-        _currentSimulationBall.transform.position = ballTransform.position;
-        _currentSimulationBall.transform.rotation = ballTransform.rotation;
-
-        rb.collisionDetectionMode = ballTransform.GetComponent<Rigidbody>().collisionDetectionMode;
-
-        if(_lastForce != force)
-        {
-            rb.AddForce(force, forceMode);
-            while(points.Count < 128)
-            {
-                var overlaps = Physics.OverlapSphere(_currentSimulationBall.transform.position, collider.radius);
-                if(overlaps.Length != 0)
-                {
-                    Debug.Log(overlaps[0].name);
-                    break;
-                }
-                else Debug.Log(overlaps.Length);
-
-                points.Add(_currentSimulationBall.transform.position);
-                _physicsScene.Simulate(Time.fixedDeltaTime);
-            }
-        }
-
-        _lastForce = force;
-
-        return points.ToArray();
-    }
-
     void Start()
     {
         Instance = this;
-        CreatePhysicsSimulationScene();
-
         _guiScript = FindObjectOfType<GUI>();
 
         // _ui = GameObject.FindObjectOfType<UserInterface>();

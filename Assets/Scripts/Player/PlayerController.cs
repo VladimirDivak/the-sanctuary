@@ -13,6 +13,16 @@ public class PlayerController : MonoBehaviour {
 
     public static Vector2 firstTouchPosition { get; private set; }
     public static Vector2 lastTouchPosition { get; private set; }
+	public static float shootingTouchRange {
+		get {
+			var distance = lastTouchPosition.y - firstTouchPosition.y;
+			distance = Mathf.Clamp(distance, -Screen.height * 0.2f, 0);
+			distance = Mathf.Abs(distance);
+
+			return distance * .5f / (Screen.height * .2f / 2);
+		}
+	}
+    public static float accuracy { get; private set; }
 
     public static Transform controllerTransform;
     public static float netDistance;
@@ -20,10 +30,8 @@ public class PlayerController : MonoBehaviour {
     [HideInInspector]
     public Transform cameraTransform { get; private set; }
 
-    [SerializeField, Range(-1, 1)]
-    float X, Y, Z, W;
-
-    Vector3 _net = new Vector3(12.779f, 0, 0);
+	Vector3 _net = new Vector3(12.779f, 0, 0);
+	Vector2 _correctTouchPosition;
     Gyroscope _gyroscope;
     Vector2 _swipeStart;
     Vector2 _swipeEnd;
@@ -32,6 +40,7 @@ public class PlayerController : MonoBehaviour {
 
     void Awake() {
         _gyroscope = Input.gyro;
+        _gyroscope.updateInterval = 0.05f;
         _gyroscope.enabled = true;
     }
 
@@ -77,6 +86,9 @@ public class PlayerController : MonoBehaviour {
 
                             else {
                                 _currentBall.ShootingModeInit();
+
+								float randomY = Random.Range(firstTouchPosition.y - Screen.height * 0.2f, firstTouchPosition.y);
+								_correctTouchPosition = new Vector2(firstTouchPosition.x, randomY);
                             }
                         }
 
@@ -92,6 +104,7 @@ public class PlayerController : MonoBehaviour {
                     if (_currentBall != null && _currentBall.shootingMode) {
                         _currentBall.PhysicEnable();
                         _currentBall = null;
+                        accuracy = 0;
 
                         break;
                     }
@@ -124,6 +137,13 @@ public class PlayerController : MonoBehaviour {
             }
 
             lastTouchPosition = Input.touches.Last().position;
+
+            if(_currentBall != null && _currentBall.shootingMode) {
+				var touchPosition = Mathf.Clamp(lastTouchPosition.y, firstTouchPosition.y - Screen.height * 0.2f, firstTouchPosition.y);
+                accuracy = Mathf.Abs(_correctTouchPosition.y - touchPosition);
+                accuracy = 1 - (0.5f * accuracy / (Screen.height * 0.2f / 2));
+				accuracy = System.MathF.Round(accuracy, 2);
+            }
         }
     }
 
