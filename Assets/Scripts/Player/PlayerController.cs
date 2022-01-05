@@ -185,11 +185,10 @@ public class PlayerController : MonoBehaviour {
     IEnumerator RotationRoutine(SwipeDirection dir) {
         float lerpProgress = 0;
         float lerpTime = 8f;
-        Vector3 rotationDir = new Vector3();
+        Vector3 rotationDir = new Vector3(0, 30, 0);
         Vector3 startRotation = controllerTransform.eulerAngles;
 
-        if(dir == SwipeDirection.Left) rotationDir = new Vector3(0, -60, 0);
-        else rotationDir = new Vector3(0, 60, 0);
+        if(dir == SwipeDirection.Left) rotationDir *= -1;
 
         while(lerpProgress < 1) {
             controllerTransform.rotation = Quaternion.Lerp(
