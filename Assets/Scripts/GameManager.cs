@@ -33,8 +33,6 @@ public class GameManager : MonoBehaviour
     public List<ClothSphereColliderPair> ClothColliders = new List<ClothSphereColliderPair>();
     private BackgroundCameraAnimation _bgCamera;
 
-    private UserInterface _ui;
-
     void Start()
     {
         Instance = this;
