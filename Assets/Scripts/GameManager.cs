@@ -1,8 +1,8 @@
 ﻿using System.Linq;
+using TheSanctuary.Interfaces;
 using System.Collections.Generic;
 
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 //  класс с некрасивым названием работает с общей
 //  логикой поведения игры
@@ -13,10 +13,6 @@ public class GameManager : MonoBehaviour
 
     [HideInInspector]
     public GameObject cameraMain { get; private set; }
-    [HideInInspector]
-    public PlayerController playerController { get; private set; }
-
-    private GUI _guiScript;
 
     [HideInInspector]
     public bool setControl = true;
@@ -30,76 +26,52 @@ public class GameManager : MonoBehaviour
 
     private Cloth[] _netsClothes;
 
-    public List<ClothSphereColliderPair> ClothColliders = new List<ClothSphereColliderPair>();
+    public List<ClothSphereColliderPair> clothColliders = new List<ClothSphereColliderPair>();
     private BackgroundCameraAnimation _bgCamera;
+
+    public IGameMode currentGameMode;
 
     void Start()
     {
         Instance = this;
-        _guiScript = FindObjectOfType<GUI>();
-
-        // _ui = GameObject.FindObjectOfType<UserInterface>();
-        // _ui.OnGameMenuEnter();
 
         _netsClothes = GameObject.FindObjectsOfType<Cloth>();
-
         cameraMain = Camera.main.gameObject;
         
         _startCameraPosition = cameraMain.transform.position;
         _startCameraRotation = cameraMain.transform.rotation;
 
-        playerController = FindObjectOfType<PlayerController>();
-        playerController.gameObject.SetActive(false);
-
-        // _bgCamera = GameObject.FindObjectOfType<BackgroundCameraAnimation>();
-        // _bgCamera.StartBackgroundCameraMoving();
-
+        if(PlayerDataHandler.Load()) Debug.Log($"Данные успешно загружены: {PlayerDataHandler.playerData.username}, {PlayerDataHandler.playerData.avgAccuracy}%");
         InitializationGame();
     }
 
     public void InitializationGame()
     {
-        playerController.gameObject.SetActive(true);
-
-        // Destroy(GameObject.Find("Background"));
-        // Destroy(GameObject.Find("LearningPanel"));
-        // Destroy(GameObject.Find("LoginPanel"));
-        // Destroy(GameObject.Find("BallCustomizePanel"));
-
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-
-        // _ui.OnGameMenuExit();
-        // GUI.ShowRegistrationPanel(false);
-        // GUI.ShowGameUI(true);
-
-        GameObject.FindObjectOfType<CameraRaycast>().OnGameInit();
-
-        // FindObjectOfType<ObjectSpawner>().SpawnBall(Network.accountData, new Vector3(12.369f, 1.23f, -1.345f));
-
-        var Balls = GameObject.FindGameObjectsWithTag("Ball");
-        foreach(var Ball in Balls)
-        {
-            ClothColliders.Add(new ClothSphereColliderPair(Ball.GetComponent<SphereCollider>(), Ball.GetComponent<SphereCollider>()));
-        }
-        
-
-        foreach(var cloth in _netsClothes)
-        {
-            cloth.sphereColliders = ClothColliders.ToArray();
-        }
-
         gameStarted = true;
-
-        // GUI.OnFadeOut -= InitializationGame;
     }
 
-    void Update()
+    public void AddColliderForNet(SphereCollider collider)
     {
-        // if(Input.GetKeyDown(KeyCode.Escape) && gameStarted)
-        // {
-        //     if(_ui.AbleToShowMenu) _ui.OnGameMenuEnter();
-        //     else _ui.OnGameMenuExit();
-        // }
+        clothColliders.Add(new ClothSphereColliderPair(collider, collider));
+        foreach(var cloth in _netsClothes)
+        {
+            cloth.sphereColliders = clothColliders.ToArray();
+        }
+    }
+
+    public void RemoveColliderForNet(SphereCollider collider)
+    {
+        clothColliders.Remove(new ClothSphereColliderPair(collider, collider));
+        foreach(var cloth in _netsClothes)
+        {
+            cloth.sphereColliders = clothColliders.ToArray();
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        PlayerDataHandler.Save();   
     }
 }

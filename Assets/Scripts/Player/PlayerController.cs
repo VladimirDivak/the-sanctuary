@@ -11,9 +11,24 @@ enum SwipeDirection {
 
 public class PlayerController : MonoBehaviour {
 
-    public static Vector2 firstTouchPosition { get; private set; }
-    public static Vector2 lastTouchPosition { get; private set; }
-	public static float shootingTouchRange {
+    public static PlayerController Instance { get; private set; }
+    public bool ableToMoving { get; set; } = true;
+    public bool ableToRaycast { get; set; } = true;
+    public PlayerBall currentBall;
+
+    [SerializeField]
+    public float netDistance;
+    [SerializeField]
+    public AccuracyValue uiAccValue;
+
+    public ScoreTrigger currentScoreTrigger;
+
+    [SerializeField]
+    public float minAngleValue;
+
+    public Vector2 firstTouchPosition { get; private set; }
+    public Vector2 lastTouchPosition { get; private set; }
+	public float shootingTouchRange {
 		get {
 			var distance = lastTouchPosition.y - firstTouchPosition.y;
 			distance = Mathf.Clamp(distance, -Screen.height * 0.2f, 0);
@@ -22,21 +37,32 @@ public class PlayerController : MonoBehaviour {
 			return distance * .5f / (Screen.height * .2f / 2);
 		}
 	}
-    public static float accuracy { get; private set; }
+    public float touchAccuracy { get; private set; }
+    public float shootAccuracy { get; private set; }
+    public float sumAccuracy => touchAccuracy * shootAccuracy;
 
-    public static Transform controllerTransform;
-    public static float netDistance;
+    private Transform _controllerTransform;
 
     [HideInInspector]
     public Transform cameraTransform { get; private set; }
 
-	Vector3 _net = new Vector3(12.779f, 0, 0);
 	Vector2 _correctTouchPosition;
     Gyroscope _gyroscope;
     Vector2 _swipeStart;
     Vector2 _swipeEnd;
     Coroutine c_rotation;
-    PlayerBall _currentBall;
+
+    public Vector3 position
+    {
+        get => _controllerTransform.position;
+        set => _controllerTransform.position = value;
+    }
+
+    public Quaternion rotation
+    {
+        get => _controllerTransform.rotation;
+        set => _controllerTransform.rotation = value;
+    }
 
     void Awake() {
         _gyroscope = Input.gyro;
@@ -45,20 +71,18 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void Start() {
+        Instance = this;
         cameraTransform = Camera.main.transform;
-        controllerTransform = transform;
+        _controllerTransform = transform;
+
+        currentScoreTrigger.isEnable = true;
     }
 
     void Update() {
-        if (controllerTransform.position.x < 0) _net *= -1;
-        
-        netDistance = (
-            _net - new Vector3 (
-                controllerTransform.position.x,
-                0,
-                controllerTransform.position.z
-            )
-        ).magnitude;
+        float coef = Mathf.Clamp(currentScoreTrigger.angleBetweenCameraAndNet, minAngleValue, 90f);
+        shootAccuracy = (1f - ((1f * coef) / minAngleValue)) * -1;
+        shootAccuracy = 1f - Mathf.Clamp(shootAccuracy, 0f, 1f);
+        shootAccuracy = System.MathF.Round(shootAccuracy, 2);
 
         cameraTransform.localRotation = new Quaternion
         (
@@ -69,6 +93,8 @@ public class PlayerController : MonoBehaviour {
         );
 
         if(Input.touches.Length > 0) {
+            if(!ableToRaycast) return;
+
             foreach (Touch touch in Input.touches) {
                 if (touch.phase == TouchPhase.Began) {
                     _swipeStart = touch.position;
@@ -79,16 +105,19 @@ public class PlayerController : MonoBehaviour {
 
                     if(Physics.Raycast(ray, out RaycastHit hitData, Mathf.Infinity)) {
                         if (hitData.transform.TryGetComponent<PlayerBall>(out var myBall)) {
-                            _currentBall = myBall;
-                            if (!myBall.isGrabed) {
-                                _currentBall.PhysicDisable();
+                            if(currentBall == null)
+                            {
+                                currentBall = myBall;
+                                currentBall.PhysicDisable();
                             }
-
                             else {
-                                _currentBall.ShootingModeInit();
+                                if(!currentBall.Equals(myBall)) return;
 
+                                currentBall.shootingMode = true;
 								float randomY = Random.Range(firstTouchPosition.y - Screen.height * 0.2f, firstTouchPosition.y);
 								_correctTouchPosition = new Vector2(firstTouchPosition.x, randomY);
+                                
+                                currentScoreTrigger.SetShootingMode(true);
                             }
                         }
 
@@ -100,37 +129,47 @@ public class PlayerController : MonoBehaviour {
                     continue;
                 }
 
-                else if (touch.phase == TouchPhase.Ended) {
-                    if (_currentBall != null && _currentBall.shootingMode) {
-                        _currentBall.PhysicEnable();
-                        _currentBall = null;
-                        accuracy = 0;
+                if (touch.phase == TouchPhase.Ended) {
+                    if (currentBall != null && currentBall.shootingMode) {
+                        if(sumAccuracy != 0) {
+                            uiAccValue.gameObject.SetActive(true);
+                            uiAccValue.ShowAccuracyValue(Mathf.RoundToInt(sumAccuracy * 100), sumAccuracy);
+                        }
 
+                        currentBall.PhysicEnable();
+                        GameManager.Instance.currentGameMode?.OnBallThrow();
+                        currentBall = null;
+                        touchAccuracy = 0;
+                        currentScoreTrigger.SetShootingMode(false);
+                        
                         break;
                     }
 
                     _swipeEnd = touch.position;
                     float horizontalSwipeMagnitude = _swipeEnd.x - _swipeStart.x;
                     float verticalSwipeMagnitude = _swipeEnd.y - _swipeStart.y;
+                    SwipeDirection swipeDirection = 0;
 
                     if (Mathf.Abs(horizontalSwipeMagnitude) > Mathf.Abs(verticalSwipeMagnitude)) {
                         if (Mathf.Abs(horizontalSwipeMagnitude) > 150) {
                             if (_swipeEnd.x - _swipeStart.x < 0) {
-                                StartCoroutine(RotationRoutine(SwipeDirection.Right));
+                                swipeDirection = SwipeDirection.Right;
                             }
                             else {
-                                StartCoroutine(RotationRoutine(SwipeDirection.Left));
+                                swipeDirection = SwipeDirection.Left;
                             }
+                            StartCoroutine(RotationRoutine(swipeDirection));
                         }
                     }
                     else {
                         if (Mathf.Abs(verticalSwipeMagnitude) > 150) {
                             if(_swipeEnd.y - _swipeStart.y < 0) {
-                                StartCoroutine(MovingRoutine(SwipeDirection.Up));
+                                swipeDirection = SwipeDirection.Up;
                             }
                             else {
-                                StartCoroutine(MovingRoutine(SwipeDirection.Down));
+                                swipeDirection = SwipeDirection.Down;
                             }
+                            StartCoroutine(MovingRoutine(swipeDirection));
                         }
                     }
                 }
@@ -138,23 +177,25 @@ public class PlayerController : MonoBehaviour {
 
             lastTouchPosition = Input.touches.Last().position;
 
-            if(_currentBall != null && _currentBall.shootingMode) {
+            if(currentBall != null && currentBall.shootingMode) {
 				var touchPosition = Mathf.Clamp(lastTouchPosition.y, firstTouchPosition.y - Screen.height * 0.2f, firstTouchPosition.y);
-                accuracy = Mathf.Abs(_correctTouchPosition.y - touchPosition);
-                accuracy = 1 - (0.5f * accuracy / (Screen.height * 0.2f / 2));
-				accuracy = System.MathF.Round(accuracy, 2);
+                touchAccuracy = Mathf.Abs(_correctTouchPosition.y - touchPosition);
+                touchAccuracy = 1 - (0.5f * touchAccuracy / (Screen.height * 0.2f / 2));
+				touchAccuracy = System.MathF.Round(touchAccuracy, 2);
             }
         }
     }
 
     IEnumerator MovingRoutine(SwipeDirection dir) {
+        if(!ableToMoving) yield break;
+
         float lerpProgress = 0;
         float lerpTime = 8f;
         float direction = 1f;
 
         if (dir == SwipeDirection.Down) direction *= -1;
 
-        Vector3 startPosition = controllerTransform.position;
+        Vector3 startPosition = _controllerTransform.position;
         Vector3 endPosition = startPosition + new Vector3(
             cameraTransform.forward.x * direction,
             0,
@@ -168,7 +209,7 @@ public class PlayerController : MonoBehaviour {
         );
 
         while(lerpProgress < 1) {
-            controllerTransform.position = Vector3.Lerp(
+            _controllerTransform.position = Vector3.Lerp(
                 startPosition,
                 endPosition,
                 lerpProgress
@@ -178,20 +219,22 @@ public class PlayerController : MonoBehaviour {
             yield return null;
         }
 
-        controllerTransform.position = endPosition;
+        _controllerTransform.position = endPosition;
         yield break;
     }
 
     IEnumerator RotationRoutine(SwipeDirection dir) {
+        if(!ableToMoving) yield break;
+        
         float lerpProgress = 0;
         float lerpTime = 8f;
         Vector3 rotationDir = new Vector3(0, 30, 0);
-        Vector3 startRotation = controllerTransform.eulerAngles;
+        Vector3 startRotation = _controllerTransform.eulerAngles;
 
         if(dir == SwipeDirection.Left) rotationDir *= -1;
 
         while(lerpProgress < 1) {
-            controllerTransform.rotation = Quaternion.Lerp(
+            _controllerTransform.rotation = Quaternion.Lerp(
                 Quaternion.Euler(startRotation),
                 Quaternion.Euler(startRotation + rotationDir),
                 lerpProgress
@@ -201,6 +244,14 @@ public class PlayerController : MonoBehaviour {
             yield return null;
         }
 
+        _controllerTransform.rotation = Quaternion.Euler(startRotation + rotationDir);
         yield break;
+    }
+
+    public Vector3 GetDistanceToTrigger() {
+        Vector3 playerPosition = new Vector3(transform.position.x, 0, transform.position.z);
+        Vector3 triggerPosition = new Vector3(currentScoreTrigger.transform.position.x, 0, currentScoreTrigger.transform.position.z);
+
+        return triggerPosition - playerPosition;
     }
 }

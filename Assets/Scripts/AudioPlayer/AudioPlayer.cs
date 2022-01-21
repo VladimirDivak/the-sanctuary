@@ -6,8 +6,6 @@ using TMPro;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
-using TheSanctuary;
-using Newtonsoft.Json;
 
 [RequireComponent(typeof(AudioSource))]
 public class AudioPlayer : MonoBehaviour
@@ -35,7 +33,7 @@ public class AudioPlayer : MonoBehaviour
     [SerializeField]
     public Material[] NetworksMaterial;
 
-    private List<Artist> _artists = new List<Artist>();
+    //private List<Artist> _artists = new List<Artist>();
 
     private bool _ableToChangeTrack = true;
 
@@ -62,8 +60,8 @@ public class AudioPlayer : MonoBehaviour
                         fs.Read(data, 0, data.Length);
                         string jsonData = System.Text.Encoding.UTF8.GetString(data);
 
-                        var artistData = JsonConvert.DeserializeObject<Artist>(jsonData);
-                        _artists.Add(artistData);
+                        // var artistData = JsonConvert.DeserializeObject<Artist>(jsonData);
+                        // _artists.Add(artistData);
                     }
                 }
             }
@@ -149,18 +147,18 @@ public class AudioPlayer : MonoBehaviour
         _artistNameText.text = Text[0];
         _trackNameText.text = Text[1];
 
-        var artistData = _artists.Find(x => _source.clip.name.Contains(x.Name));
+        //var artistData = _artists.Find(x => _source.clip.name.Contains(x.Name));
 
         GameObject NetworkDataObject;
         Material DataObjectMaterial;
         Dictionary<string, string> keyWord = new Dictionary<string, string>();
 
-        if(artistData.Mail != null) keyWord.Add("Mail", artistData.Mail);
-        if(artistData.Instagram != null) keyWord.Add("Instagram", artistData.Instagram);
-        if(artistData.SoundCloud != null) keyWord.Add("SoundCloud", artistData.SoundCloud);
-        if(artistData.Facebook != null) keyWord.Add("Facebook", artistData.Facebook);
-        if(artistData.Twitter != null) keyWord.Add("Twitter", artistData.Twitter);
-        if(artistData.TikTok != null) keyWord.Add("TikTok", artistData.TikTok);
+        // if(artistData.Mail != null) keyWord.Add("Mail", artistData.Mail);
+        // if(artistData.Instagram != null) keyWord.Add("Instagram", artistData.Instagram);
+        // if(artistData.SoundCloud != null) keyWord.Add("SoundCloud", artistData.SoundCloud);
+        // if(artistData.Facebook != null) keyWord.Add("Facebook", artistData.Facebook);
+        // if(artistData.Twitter != null) keyWord.Add("Twitter", artistData.Twitter);
+        // if(artistData.TikTok != null) keyWord.Add("TikTok", artistData.TikTok);
 
         foreach(var item in keyWord)
         {
