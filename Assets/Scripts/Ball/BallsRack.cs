@@ -8,19 +8,14 @@ using UnityEngine.Events;
 
 public class BallsRack : MonoBehaviour
 {
-    [SerializeField]
-    PlayerBall playerBall;
-    [SerializeField]
-    int activeBalls;
-    [SerializeField]
-    GameObject[] balls;
-    [SerializeField]
-    bool ableToUse = true;
+    [SerializeField] PlayerBall playerBall;
+    public int activeBalls;
+    [SerializeField] GameObject[] balls;
+    [SerializeField] bool ableToUse = true;
 
-    [SerializeField]
-    public UnityEvent OnRackIsEmpty;
+    [SerializeField] public UnityEvent OnRackIsEmpty;
 
-    public int ballsCounter { get => balls.Count(x => x.activeSelf); }
+    public int ballsCounter => balls.Count(x => x.activeSelf);
 
     void Start()
     {
@@ -41,9 +36,9 @@ public class BallsRack : MonoBehaviour
             return;
         }
 
-        var newBall = Instantiate(playerBall, Vector3.zero + Vector3.up * 2, Quaternion.identity);
+        var newBall = Instantiate(playerBall, transform.position + Vector3.up * 1.5f, Quaternion.identity);
         balls.First(x => x.activeSelf).SetActive(false);
-        await Task.Delay(25);
+        await Task.Delay(10);
         
         PlayerController.Instance.currentBall = newBall;
         newBall.PhysicDisable();

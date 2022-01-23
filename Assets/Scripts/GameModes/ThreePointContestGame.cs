@@ -1,6 +1,6 @@
 using System.Collections;
+using System.Threading.Tasks;
 using System.Collections.Generic;
-using  System.Threading.Tasks;
 
 using UnityEngine;
 using TheSanctuary.Interfaces;
@@ -24,22 +24,24 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
 
     private readonly float _distanceToNet = 7f;
 
-    [SerializeField]
-    ScoreTrigger[] scoreTriggers;
+    [SerializeField] ScoreTrigger[] scoreTriggers;
     ScoreTrigger _selectedScoreTrigger;
 
-    [SerializeField]
-    SirenSound siren;
+    [SerializeField] SirenSound siren;
 
-    [SerializeField]
-    BallsRack ballRack;
+    [SerializeField] BallsRack ballRack;
     BallsRack _currentBallRack;
 
     ThreePointPosition _currentPosition = ThreePointPosition.Poisiton90;
 
     void Start()
     {
-        siren.OnStartTimerEnded.AddListener(() => PlayerController.Instance.ableToRaycast = true);
+        siren.OnStartTimerEnded.AddListener(() => 
+            PlayerController.
+                Instance.
+                ableToRaycast = true
+            );
+
         blockBallGrabbing = true;
         destroyBallAfter = true;
     }
@@ -50,28 +52,28 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
         switch(position)
         {
             case ThreePointPosition.Poisiton90:
-            _currentPosition = ThreePointPosition.Poisiton90;
-            angle = 90;
+                _currentPosition = ThreePointPosition.Poisiton90;
+                angle = 90;
             break;
 
             case ThreePointPosition.Position45:
-            _currentPosition = ThreePointPosition.Position45;
-            angle = 45;
+                _currentPosition = ThreePointPosition.Position45;
+                angle = 45;
             break;
 
             case ThreePointPosition.PositionCenter:
-            _currentPosition = ThreePointPosition.PositionCenter;
-            angle = 1;
+                _currentPosition = ThreePointPosition.PositionCenter;
+                angle = 1;
             break;
 
             case ThreePointPosition.Positon45Minus:
-            _currentPosition = ThreePointPosition.Positon45Minus;
-            angle = -45;
+                _currentPosition = ThreePointPosition.Positon45Minus;
+                angle = -45;
             break;
 
             case ThreePointPosition.Position90Minus:
-            _currentPosition = ThreePointPosition.Position90Minus;
-            angle = -90;
+                _currentPosition = ThreePointPosition.Position90Minus;
+                angle = -90;
             break;
         }
 
@@ -82,8 +84,10 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
         return distanceFromNet + new Vector3(_selectedScoreTrigger.transform.position.x, 0, _selectedScoreTrigger.transform.position.z);
     }
 
-    void ChangeThrowPosition()
+    async void ChangeThrowPosition()
     {
+        ballRack.activeBalls = 5;
+
         if(_currentBallRack != null)
         {
             Destroy(_currentBallRack.gameObject);
@@ -132,8 +136,24 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
         playerRotation = Quaternion.Euler(90, playerRotation.eulerAngles.y, playerRotation.eulerAngles.z);
         PlayerController.Instance.rotation = playerRotation;
 
-        _currentBallRack = Instantiate(ballRack,
-        PlayerController.Instance.transform.right * 0.5f + PlayerController.Instance.transform.up * 0.5f + PlayerController.Instance.position, Quaternion.Euler(new Vector3(0, rackAngle, 0)));
+        await Task.Delay(10);
+        
+        Vector3 currentRotation = PlayerController.Instance.transform.eulerAngles;
+        PlayerController.Instance.rotation = Quaternion.Euler(currentRotation.x,
+            currentRotation.y,
+            currentRotation.z + _selectedScoreTrigger.angleForGames);
+        
+        Vector3 rackPosition = PlayerController.Instance.cameraTransform.right * 0.5f +
+            PlayerController.Instance.cameraTransform.forward * 0.5f +
+            PlayerController.Instance.position;
+
+        rackPosition = new Vector3(rackPosition.x, 0, rackPosition.z);
+
+        _currentBallRack = Instantiate(
+            ballRack,
+            rackPosition,
+            Quaternion.Euler(new Vector3(0, rackAngle, 0)));
+        
         _currentBallRack.OnRackIsEmpty.AddListener(ChangeThrowPosition);
     }
 
@@ -144,6 +164,12 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
 
     public void StartGame()
     {
+        var racks = FindObjectsOfType<BallsRack>();
+        foreach(var rack in racks) Destroy(rack.gameObject);
+
+        var balls = FindObjectsOfType<Ball>();
+        foreach(var ball in balls) Destroy(ball.gameObject);
+
         int scoreTriggerIndex = Random.Range(0, scoreTriggers.Length);
         _selectedScoreTrigger = scoreTriggers[scoreTriggerIndex];
 
@@ -155,36 +181,50 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
 
         GameManager.Instance.currentGameMode = this;
     }
+    
     public void OnBallThrow()
     {
-        if (_currentBallRack.ballsCounter == 0)
+
+    }
+
+    public void OnBallGetParket()
+    {
+        if(_currentBallRack.ballsCounter == 0)
         {
-            if(_currentPosition == ThreePointPosition.Position90Minus) EndGame();
-            else
+            if(_currentPosition != ThreePointPosition.Position90Minus)
             {
                 _currentPosition++;
                 ChangeThrowPosition();
             }
+            else EndGame();
         }
     }
 
-    public void OnBallGetParket() {}
-
     public void OnGetScore()
     {
-
+        if(_currentBallRack.ballsCounter == 0)
+        {
+            if(_currentPosition != ThreePointPosition.Position90Minus)
+            {
+                _currentPosition++;
+                ChangeThrowPosition();
+            }
+            else EndGame();
+        }
     }
 
     public void EndGame()
     {
+        PlayerController.Instance.ableToMoving = true;
+
         siren.PlayEndGameSirenSound();
         Destroy(_currentBallRack.gameObject);
         _currentBallRack = null;
         _currentPosition = ThreePointPosition.Poisiton90;
 
-        PlayerController.Instance.ableToMoving = true;
-
         GameManager.Instance.currentGameMode = null;
+        GameManager.Instance.ResetGameState();
+
         PlayerDataHandler.Save();
     }
 }

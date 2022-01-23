@@ -15,14 +15,10 @@ public abstract class Ball : MonoBehaviour
     protected Rigidbody rigidBody;
     protected AudioSource bouncesSource;
 
-    [HideInInspector]
-    public bool onAir;
-    [HideInInspector]
-    public bool itsPoint;
-    [HideInInspector]
-    public bool isGrabed;
-    [HideInInspector]
-    public bool ballCorrectHigh;
+    [HideInInspector] public bool onAir;
+    [HideInInspector] public bool itsPoint;
+    [HideInInspector] public bool isGrabed;
+    [HideInInspector] public bool ballCorrectHigh;
 
     protected bool ballOnParket;
 
@@ -48,8 +44,15 @@ public abstract class Ball : MonoBehaviour
 
         if(GameManager.Instance.currentGameMode != null)
         {
-            ableToGrabbing = GameManager.Instance.currentGameMode.blockBallGrabbing;
-            destroyAfter = GameManager.Instance.currentGameMode.destroyBallAfter;
+            ableToGrabbing = GameManager.
+                Instance.
+                currentGameMode.
+                blockBallGrabbing;
+
+            destroyAfter = GameManager.
+                Instance.
+                currentGameMode.
+                destroyBallAfter;
         }
     }
 
@@ -71,9 +74,13 @@ public abstract class Ball : MonoBehaviour
 
             if (collision.transform.tag == "Parket")
             {
-                if(parketHitCount == 0 && destroyAfter)
+                if(parketHitCount == 0)
                 {
-                    DestroyBall();
+                    if(GameManager.Instance.currentGameMode != null)
+                    {
+                        GameManager.Instance.currentGameMode.OnBallGetParket();
+                    }
+                    if(destroyAfter) DestroyBall();
                 }
 
                 ballOnParket = true;
@@ -151,5 +158,12 @@ public abstract class Ball : MonoBehaviour
             }
         }
         yield break;
+    }
+
+    void OnDestroy()
+    {
+        GameManager
+            .Instance
+            .RemoveColliderForNet(GetComponent<SphereCollider>());
     }
 }

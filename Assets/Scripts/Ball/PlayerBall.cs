@@ -5,17 +5,13 @@ using System.Collections.Generic;
 using UnityEngine;
 public class PlayerBall : Ball {
 
-    [SerializeField]
-    Material _transparentMaterial;
+    [SerializeField] Material transparentMaterial;
+    [HideInInspector] public bool shootingMode;
+    [HideInInspector] public float lerpTime = 15;
 
     Material _baseMaterial;
-
     float _shootForce;
 
-    [HideInInspector]
-    public bool shootingMode;
-
-    [SerializeField]
     float _h = 6.5f;
     float _gravity = -18;
     float _distanceToTrigger;
@@ -30,7 +26,7 @@ public class PlayerBall : Ball {
 
     public override void PhysicEnable() {
         base.PhysicEnable();
-        _transparentMaterial.SetFloat(_materialPropertyName, 0.55f);
+        transparentMaterial.SetFloat(_materialPropertyName, 0.55f);
         GetComponent<Renderer>().material = _baseMaterial;
 
         shootingMode = false;
@@ -39,7 +35,8 @@ public class PlayerBall : Ball {
         if(PlayerController.Instance.currentScoreTrigger.correctAngle) {
             Physics.gravity = Vector3.up * _gravity;
             rigidBody.velocity = GetTrowVelocity();
-
+            
+            if (GameManager.Instance.currentGameMode != null)
             PlayerDataHandler.ChangeAvgAccuracy(Mathf.RoundToInt(PlayerController.Instance.sumAccuracy * 100));
         }
         else {
@@ -53,7 +50,7 @@ public class PlayerBall : Ball {
         
         base.PhysicDisable();
         rigidBody.useGravity = false;
-        GetComponent<Renderer>().material = _transparentMaterial;
+        GetComponent<Renderer>().material = transparentMaterial;
     }
 
     void Update() {
@@ -66,7 +63,7 @@ public class PlayerBall : Ball {
                 transformCashe.position = Vector3.Lerp (
                     transformCashe.position,
                     PlayerController.Instance.cameraTransform.position + PlayerController.Instance.cameraTransform.forward * .8f - PlayerController.Instance.cameraTransform.up * .15f,
-                    Time.deltaTime * 15
+                    Time.deltaTime * lerpTime
                 );
 
                 transform.LookAt(PlayerController.Instance.cameraTransform);
@@ -87,10 +84,12 @@ public class PlayerBall : Ball {
                 position + forward * .6f - up * .4f,
                 PlayerController.Instance.shootingTouchRange);
 
-                _transparentMaterial.SetFloat(_materialPropertyName,
-                    PlayerController.Instance.currentScoreTrigger.correctAngle
+                float lerpValue = PlayerController.Instance.currentScoreTrigger.correctAngle
                         ? PlayerController.Instance.sumAccuracy
-                        : PlayerController.Instance.shootingTouchRange);
+                        : PlayerController.Instance.shootingTouchRange;
+                lerpValue = System.MathF.Round(lerpValue, 1);
+
+                transparentMaterial.SetFloat(_materialPropertyName, lerpValue);
             }
         }
     }

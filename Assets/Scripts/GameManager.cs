@@ -11,15 +11,12 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    [HideInInspector]
-    public GameObject cameraMain { get; private set; }
+    [SerializeField] BallsRack ballsRack;
 
-    [HideInInspector]
-    public bool setControl = true;
-    [HideInInspector]
-    public bool setMovingControl = true;
-    [HideInInspector]
-    public bool gameStarted;
+    [HideInInspector] public GameObject cameraMain { get; private set; }
+    [HideInInspector] public bool setControl = true;
+    [HideInInspector] public bool setMovingControl = true;
+    [HideInInspector] public bool gameStarted;
 
     private Vector3 _startCameraPosition;
     private Quaternion _startCameraRotation;
@@ -31,8 +28,12 @@ public class GameManager : MonoBehaviour
 
     public IGameMode currentGameMode;
 
+    private Quaternion[] _startRacksRotation;
+    private Vector3[] _startRacksPosition;
+
     void Start()
     {
+        ballsRack.activeBalls = 2;
         Instance = this;
 
         _netsClothes = GameObject.FindObjectsOfType<Cloth>();
@@ -40,6 +41,16 @@ public class GameManager : MonoBehaviour
         
         _startCameraPosition = cameraMain.transform.position;
         _startCameraRotation = cameraMain.transform.rotation;
+
+        var startRacks = FindObjectsOfType<BallsRack>();
+        _startRacksRotation = new Quaternion[startRacks.Length];
+        _startRacksPosition = new Vector3[startRacks.Length];
+
+        for(int i = 0; i < startRacks.Length; i++)
+        {
+            _startRacksRotation[i] = startRacks[i].transform.rotation;
+            _startRacksPosition[i] = startRacks[i].transform.position;
+        }
 
         if(PlayerDataHandler.Load()) Debug.Log($"Данные успешно загружены: {PlayerDataHandler.playerData.username}, {PlayerDataHandler.playerData.avgAccuracy}%");
         InitializationGame();
@@ -73,5 +84,17 @@ public class GameManager : MonoBehaviour
     private void OnApplicationQuit()
     {
         PlayerDataHandler.Save();   
+    }
+
+    public void ResetGameState()
+    {
+        ballsRack.activeBalls = 2;
+
+        for(int i = 0; i < _startRacksPosition.Length; i++)
+        {
+            Instantiate(ballsRack,
+                _startRacksPosition[i],
+                _startRacksRotation[i]);
+        }
     }
 }

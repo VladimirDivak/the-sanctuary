@@ -10,10 +10,22 @@ public static class PlayerDataHandler
 {
     public static PlayerData playerData { get; private set; } = new PlayerData();
     private static readonly BinaryFormatter _formatter = new BinaryFormatter();
-    private static readonly string saveDirectoryPath = Application.dataPath + "/plrd.ts";
+    private static readonly string saveDirectoryPath = Application.dataPath + "/plrd.tsntry";
 
     public static void Save()
     {
+        float accSum = 0;
+        foreach(float accuracy in playerData.throwAccuracyData)
+        {
+            accSum += accuracy;
+        }
+        accSum /= playerData.throwAccuracyData.Count;
+        playerData.avgAccuracy += accSum;
+        playerData.avgAccuracy /= 2;
+        playerData.avgAccuracy = MathF.Round(playerData.avgAccuracy, 1);
+
+        playerData.throwAccuracyData = new List<float>();
+
         using (FileStream fs = new FileStream(saveDirectoryPath, FileMode.OpenOrCreate))
         {
             _formatter.Serialize(fs, playerData);
@@ -41,16 +53,5 @@ public static class PlayerDataHandler
         }
     }
 
-    public static void ChangeAvgAccuracy(float lastValue)
-    {
-        float itemsSum = 0;
-        playerData.throwAccuracyData.Add(lastValue);
-        
-        foreach(float item in playerData.throwAccuracyData)
-        {
-            itemsSum += item;
-        }
-
-        playerData.avgAccuracy = itemsSum / playerData.throwAccuracyData.Count;
-    }
+    public static void ChangeAvgAccuracy(float lastValue) => playerData.throwAccuracyData.Add(lastValue);
 }

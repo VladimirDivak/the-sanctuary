@@ -1,24 +1,24 @@
 ﻿using System.Linq;
 using UnityEngine;
-using UnityEngine.Events;
 
 public class ScoreTrigger : MonoBehaviour
 {
-    [SerializeField]
-    GameObject net;
+    [SerializeField] GameObject net;
 
     Transform _triggerTransform;
     AudioSource _netSound;
     Material _netMaterial;
 
-    public float angleBetweenCameraAndNet { get; private set; }
-    public float angleBetweenPlayerAndNet { get; private set; }
+    public float angleBetweenCameraAndNet;
+    public float angleForGames;
+    public float angleBetweenPlayerAndNet;
+
     public bool correctAngle;
     public bool isEnable { get; set; }
     public bool isShootingMode => _netMaterial.GetInt("_useColorLerp") == 1 ? true : false;
     public void SetShootingMode(bool isTrue) => _netMaterial.SetInt("_useColorLerp", isTrue ? 1 : 0);
 
-        void Start()
+    void Start()
     {
         _netSound = GetComponent<AudioSource>();
         _triggerTransform = transform;
@@ -29,16 +29,22 @@ public class ScoreTrigger : MonoBehaviour
     {
         Vector3 fromNetToCamera = -(PlayerController.Instance.cameraTransform.position - new Vector3(transform.position.x, 3.2f, transform.position.z)).normalized;
         Vector3 cameraForwardDir = PlayerController.Instance.cameraTransform.forward.normalized;
-        angleBetweenCameraAndNet = Vector3.Angle(fromNetToCamera, cameraForwardDir);
+        angleBetweenCameraAndNet = Vector3.SignedAngle(fromNetToCamera, cameraForwardDir, Vector3.up);
+        angleForGames = Vector3.SignedAngle(new Vector3(fromNetToCamera.x, 0, fromNetToCamera.z), new Vector3(cameraForwardDir.x, 0, cameraForwardDir.z), Vector3.up);
         
-        var playerAngleA = new Vector3(fromNetToCamera.x, 0, fromNetToCamera.z);
+        var playerAngleA = new Vector3(
+            fromNetToCamera.x,
+            0,
+            fromNetToCamera.z);
+
         var playerAngleB = new Vector3(
             PlayerController.Instance.transform.up.x, 
             0,
             PlayerController.Instance.transform.up.z);
-        angleBetweenPlayerAndNet = Vector3.Angle(playerAngleA, playerAngleB);
 
-        if (angleBetweenCameraAndNet < 30 && !isEnable)
+        angleBetweenPlayerAndNet = Vector3.SignedAngle(playerAngleA, playerAngleB, Vector3.up);
+
+        if (Mathf.Abs(angleBetweenCameraAndNet) < 30 && !isEnable)
         {
             isEnable = true;
             if(PlayerController.Instance.currentScoreTrigger.isShootingMode) SetShootingMode(true);
@@ -48,8 +54,8 @@ public class ScoreTrigger : MonoBehaviour
         }
 
         if(isEnable && _netMaterial.GetInt("_useColorLerp") == 1) {
-            _netMaterial.SetFloat("_lerpValue", PlayerController.Instance.shootAccuracy);
-            correctAngle = angleBetweenCameraAndNet <= PlayerController.Instance.minAngleValue ? true : false;
+            _netMaterial.SetFloat("_lerpValue", System.MathF.Round(PlayerController.Instance.shootAccuracy, 1));
+            correctAngle = Mathf.Abs(angleBetweenCameraAndNet) <= PlayerController.Instance.minAngleValue ? true : false;
         }
     }
 
@@ -60,6 +66,11 @@ public class ScoreTrigger : MonoBehaviour
             ball.StopCheckBallHight();
             if(ball.ballCorrectHigh == true)
             {
+                GameManager
+                    .Instance
+                    .currentGameMode
+                    .OnGetScore();
+                
                 ball.itsPoint = true;
                 _netSound.Play();
             }
