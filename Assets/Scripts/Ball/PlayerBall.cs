@@ -3,31 +3,22 @@ using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
+
 public class PlayerBall : Ball {
 
-    [SerializeField] Material transparentMaterial;
+    // [SerializeField] Material transparentMaterial;
     [HideInInspector] public bool shootingMode;
     [HideInInspector] public float lerpTime = 15;
 
-    Material _baseMaterial;
-    float _shootForce;
+    private float _shootForce;
 
-    float _h = 6.5f;
-    float _gravity = -18;
-    float _distanceToTrigger;
-
-    string _materialPropertyName = "_accuracy";
-    float _materialLerpValue;
-
-    protected override void Start() {
-        _baseMaterial = GetComponent<Renderer>().material;
-        base.Start();
-    }
+    private float _h = 6.5f;
+    private float _gravity = -18;
+    private float _distanceToTrigger;
 
     public override void PhysicEnable() {
         base.PhysicEnable();
-        transparentMaterial.SetFloat(_materialPropertyName, 0.55f);
-        GetComponent<Renderer>().material = _baseMaterial;
+        SetThrowMode(0);
 
         shootingMode = false;
         rigidBody.useGravity = true;
@@ -37,12 +28,14 @@ public class PlayerBall : Ball {
             rigidBody.velocity = GetTrowVelocity();
             
             if (GameManager.Instance.currentGameMode != null)
-            PlayerDataHandler.ChangeAvgAccuracy(Mathf.RoundToInt(PlayerController.Instance.sumAccuracy * 100));
+            PlayerDataHandler.AddAvgAccuracy(PlayerController.Instance.sumAccuracy * 100);
         }
         else {
             Physics.gravity = Vector3.up * -9.81f;
             rigidBody.AddForce(PlayerController.Instance.cameraTransform.forward * 600 * PlayerController.Instance.shootingTouchRange);
         }
+
+        rigidBody.AddTorque(transform.right * 2, ForceMode.Impulse);
     }
 
     public override void PhysicDisable() {
@@ -50,7 +43,8 @@ public class PlayerBall : Ball {
         
         base.PhysicDisable();
         rigidBody.useGravity = false;
-        GetComponent<Renderer>().material = transparentMaterial;
+        SetThrowMode(1);
+        ChangeThrowPower(.5f);
     }
 
     void Update() {
@@ -89,7 +83,7 @@ public class PlayerBall : Ball {
                         : PlayerController.Instance.shootingTouchRange;
                 lerpValue = System.MathF.Round(lerpValue, 1);
 
-                transparentMaterial.SetFloat(_materialPropertyName, lerpValue);
+                ChangeThrowPower(lerpValue);
             }
         }
     }

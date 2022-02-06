@@ -66,10 +66,13 @@ public class ScoreTrigger : MonoBehaviour
             ball.StopCheckBallHight();
             if(ball.ballCorrectHigh == true)
             {
-                GameManager
-                    .Instance
-                    .currentGameMode
-                    .OnGetScore();
+                if(GameManager.Instance.currentGameMode != null)
+                {
+                    GameManager
+                        .Instance
+                        .currentGameMode
+                        .OnGetScore();
+                }
                 
                 ball.itsPoint = true;
                 _netSound.Play();

@@ -23,6 +23,8 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
     public bool destroyBallAfter { get; set; }
 
     private readonly float _distanceToNet = 7f;
+    private int _throwsCounter;
+    private bool _isScore;
 
     [SerializeField] ScoreTrigger[] scoreTriggers;
     ScoreTrigger _selectedScoreTrigger;
@@ -36,14 +38,36 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
 
     void Start()
     {
-        siren.OnStartTimerEnded.AddListener(() => 
-            PlayerController.
-                Instance.
-                ableToRaycast = true
-            );
-
         blockBallGrabbing = true;
         destroyBallAfter = true;
+    }
+
+    public void StartGame()
+    {
+        Fade.Instance.ShowAfter(() =>
+        {
+            PlayerController.Instance.ableToRaycast = false;
+            PlayerController.Instance.ableToMoving = false;
+
+            var racks = FindObjectsOfType<BallsRack>();
+            foreach(var rack in racks) Destroy(rack.gameObject);
+
+            var balls = FindObjectsOfType<Ball>();
+            foreach(var ball in balls) Destroy(ball.gameObject);
+
+            int scoreTriggerIndex = Random.Range(0, scoreTriggers.Length);
+            _selectedScoreTrigger = scoreTriggers[scoreTriggerIndex];
+
+            Fade.Instance.actionTask = ChangeThrowPosition();
+            GameManager.Instance.currentGameMode = this;
+
+            siren.PlayStartGameSounds(()=>
+            {
+                PlayerController.
+                    Instance.
+                    ableToRaycast = true;
+            });
+        });
     }
 
     Vector3 GetThrowPosition(ThreePointPosition position)
@@ -84,9 +108,10 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
         return distanceFromNet + new Vector3(_selectedScoreTrigger.transform.position.x, 0, _selectedScoreTrigger.transform.position.z);
     }
 
-    async void ChangeThrowPosition()
+    async Task ChangeThrowPosition()
     {
         ballRack.activeBalls = 5;
+        ballRack.useLastBall = true;
 
         if(_currentBallRack != null)
         {
@@ -153,61 +178,47 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
             ballRack,
             rackPosition,
             Quaternion.Euler(new Vector3(0, rackAngle, 0)));
-        
-        _currentBallRack.OnRackIsEmpty.AddListener(ChangeThrowPosition);
     }
 
     public string GetGameDiscription()
     {
         return string.Empty;
     }
-
-    public void StartGame()
-    {
-        var racks = FindObjectsOfType<BallsRack>();
-        foreach(var rack in racks) Destroy(rack.gameObject);
-
-        var balls = FindObjectsOfType<Ball>();
-        foreach(var ball in balls) Destroy(ball.gameObject);
-
-        int scoreTriggerIndex = Random.Range(0, scoreTriggers.Length);
-        _selectedScoreTrigger = scoreTriggers[scoreTriggerIndex];
-
-        PlayerController.Instance.ableToRaycast = false;
-        PlayerController.Instance.ableToMoving = false;
-
-        ChangeThrowPosition();
-        siren.PlayStartGameSirenSound();
-
-        GameManager.Instance.currentGameMode = this;
-    }
     
     public void OnBallThrow()
     {
-
+        _throwsCounter++;
     }
 
-    public void OnBallGetParket()
+    public void OnGetScore()
     {
-        if(_currentBallRack.ballsCounter == 0)
+        _isScore = true;
+
+        if(_throwsCounter % 5 == 0)
         {
-            if(_currentPosition != ThreePointPosition.Position90Minus)
+            if(_throwsCounter != 25 && _currentPosition != ThreePointPosition.Position90Minus)
             {
                 _currentPosition++;
-                ChangeThrowPosition();
+                Fade.Instance.ShowAfter(()=> Fade.Instance.actionTask = ChangeThrowPosition());
             }
             else EndGame();
         }
     }
 
-    public void OnGetScore()
+    public void OnBallGetParket()
     {
-        if(_currentBallRack.ballsCounter == 0)
+        if(_isScore)
         {
-            if(_currentPosition != ThreePointPosition.Position90Minus)
+            _isScore = false;
+            return;
+        }
+
+        if(_throwsCounter % 5 == 0)
+        {
+            if(_throwsCounter != 25 && _currentPosition != ThreePointPosition.Position90Minus)
             {
                 _currentPosition++;
-                ChangeThrowPosition();
+                Fade.Instance.ShowAfter(()=> Fade.Instance.actionTask = ChangeThrowPosition());
             }
             else EndGame();
         }
@@ -215,16 +226,22 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
 
     public void EndGame()
     {
-        PlayerController.Instance.ableToMoving = true;
-
-        siren.PlayEndGameSirenSound();
-        Destroy(_currentBallRack.gameObject);
-        _currentBallRack = null;
-        _currentPosition = ThreePointPosition.Poisiton90;
-
-        GameManager.Instance.currentGameMode = null;
-        GameManager.Instance.ResetGameState();
-
         PlayerDataHandler.Save();
+
+        siren.PlayEndGameSounds(()=>
+        {
+            Fade.Instance.ShowAfter(()=>
+            {
+                PlayerController.Instance.ableToMoving = true;
+
+                Destroy(_currentBallRack.gameObject);
+                _currentBallRack = null;
+                _currentPosition = ThreePointPosition.Poisiton90;
+                _throwsCounter = 0;
+
+                GameManager.Instance.currentGameMode = null;
+                GameManager.Instance.ResetGameState();
+            });
+        });
     }
 }

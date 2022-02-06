@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.Collections;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.Collections.Generic;
-using System.Linq;
 
 //  скрипт, описывающий логику работы всего (почти),
 //  что связано с игровым инетрфесом
@@ -23,15 +25,14 @@ public enum PopUpMessageType
 
 public class GUI : MonoBehaviour
 {
+    public static GUI Instance { get; private set; }
+
     private static GameObject _crosshair;
     private GameObject _currentPointCamElement;
 
-    [SerializeField]
-    public GameObject PopUpPanel;
-    [SerializeField]
-    public Sprite[] PopUpIcons;
-    [SerializeField]
-    public GameObject PointCamElement;
+    [SerializeField] public GameObject PopUpPanel;
+    [SerializeField] public Sprite[] PopUpIcons;
+    [SerializeField] public GameObject PointCamElement;
 
     [HideInInspector] public GameObject PopUpIcon;
     [HideInInspector] public GameObject PopUpContainer;
@@ -47,7 +48,6 @@ public class GUI : MonoBehaviour
             _currentPointCamElement = Instantiate(PointCamElement, new Vector2(Screen.width - 145, Screen.height - 145), Quaternion.identity);
             Rect = _currentPointCamElement.GetComponent<RectTransform>();
             Rect.SetParent(this.transform);
-            FindObjectOfType<PointCam>().OnBallGrab(CurrentBall);
         }
         else
         {
@@ -58,6 +58,8 @@ public class GUI : MonoBehaviour
 
     void Start()
     {
+        Instance = this;
+
         PopUpContainer = GameObject.Find("PopupContainer");
 
         _crosshair = GameObject.Find("Crosshair");

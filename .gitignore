@@ -1,5 +1,6 @@
 /.vs
 /.vscode
+/Assets/AddressableAssetsData
 /Assets/AssetBundles
 /Assets/BundlesFiles
 /Assets/DownloadBundles
@@ -50,3 +51,4 @@ Assembly-CSharp-Editor.csproj
 theSanctuary.sln
 *.meta
 *.tsntry
+*.blob

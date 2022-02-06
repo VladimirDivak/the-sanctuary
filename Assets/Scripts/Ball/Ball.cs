@@ -34,8 +34,26 @@ public abstract class Ball : MonoBehaviour
     protected bool ableToGrabbing = true;
     protected bool destroyAfter = false;
 
+    private Material _baseMaterial;
+
+    public string propColor { get; private set; } = "_Color";
+    public string propUseEmmision { get; private set; } = "_UseEmission";
+    public string propEmissionColor { get; private set; } = "_EmissionColor";
+    public string propThrowMode { get; private set; } = "_ThrowMode";
+    public string propThrowPower { get; private set; } = "_ThrowPower";
+    public string propIsLastBall { get; private set; } = "_IsLastBall";
+
+    public void ChangeColor(Color color) => _baseMaterial.SetColor(propColor, color);
+    public void SetEmission(int value) => _baseMaterial.SetInt(propUseEmmision, value);
+    public void ChangeEmissionColor (Color color) => _baseMaterial.SetColor(propEmissionColor, color);
+    public void SetThrowMode(int value) => _baseMaterial.SetInt(propThrowMode, value);
+    public void ChangeThrowPower(float value) => _baseMaterial.SetFloat(propThrowPower, value);
+    public void SetLastBallTexture(int value) => _baseMaterial.SetInt(propIsLastBall, value);
+
     protected virtual void Start()
     {
+        _baseMaterial = GetComponent<MeshRenderer>().material;
+
         transformCashe = transform;
         rigidBody = GetComponent<Rigidbody>();
         bouncesSource = GetComponent<AudioSource>();
@@ -44,13 +62,11 @@ public abstract class Ball : MonoBehaviour
 
         if(GameManager.Instance.currentGameMode != null)
         {
-            ableToGrabbing = GameManager.
-                Instance.
+            ableToGrabbing = GameManager.Instance.
                 currentGameMode.
                 blockBallGrabbing;
 
-            destroyAfter = GameManager.
-                Instance.
+            destroyAfter = GameManager.Instance.
                 currentGameMode.
                 destroyBallAfter;
         }
@@ -98,6 +114,7 @@ public abstract class Ball : MonoBehaviour
     async void DestroyBall()
     {
         await Task.Delay(3000);
+        GameManager.Instance.RemoveColliderForNet(GetComponent<SphereCollider>());
         Destroy(this.gameObject);
     }
 
@@ -158,12 +175,5 @@ public abstract class Ball : MonoBehaviour
             }
         }
         yield break;
-    }
-
-    void OnDestroy()
-    {
-        GameManager
-            .Instance
-            .RemoveColliderForNet(GetComponent<SphereCollider>());
     }
 }

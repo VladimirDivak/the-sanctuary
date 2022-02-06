@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -17,9 +19,8 @@ public class SirenSound : MonoBehaviour
     [SerializeField]
     AudioClip endSound;
 
-    [SerializeField]
-    public UnityEvent OnStartTimerEnded;
-
+    private event Action _onStartTimerEnded;
+    private event Action _onEndTimerEnded;
     AudioSource _source;
 
     void Start()
@@ -28,30 +29,36 @@ public class SirenSound : MonoBehaviour
         _source = GetComponent<AudioSource>();
     }
 
-    public void PlayStartGameSirenSound() => StartCoroutine(StartGameRoutine());
-    public void PlayEndGameSirenSound() => StartCoroutine(EndGameRoutine());
-
-    IEnumerator StartGameRoutine()
+    public async void PlayStartGameSounds(Action DoAfter)
     {
+        _onStartTimerEnded += DoAfter;
+
         _source.clip = middleSound;
         _source.Play();
-        yield return new WaitForSeconds(1);
+        await Task.Delay(1000);
         _source.Play();
-        yield return new WaitForSeconds(1);
+        await Task.Delay(1000);
         _source.Play();
-        yield return new WaitForSeconds(1);
+        await Task.Delay(1000);
         _source.clip = highSound;
         _source.Play();
-        OnStartTimerEnded?.Invoke();
+
+        _onStartTimerEnded?.Invoke();
+        _onStartTimerEnded -= DoAfter;
     }
 
-    IEnumerator EndGameRoutine()
+    public async void PlayEndGameSounds(Action DoAfter)
     {
+        _onEndTimerEnded += DoAfter;
+
         sirenLights.SetActive(true);
         _source.clip = endSound;
         _source.Play();
 
-        yield return new WaitForSeconds(5);
+        await Task.Delay(5000);
         sirenLights.SetActive(false);
+
+        _onEndTimerEnded?.Invoke();
+        _onEndTimerEnded -= DoAfter;
     }
 }

@@ -52,7 +52,9 @@ public class GameManager : MonoBehaviour
             _startRacksPosition[i] = startRacks[i].transform.position;
         }
 
-        if(PlayerDataHandler.Load()) Debug.Log($"Данные успешно загружены: {PlayerDataHandler.playerData.username}, {PlayerDataHandler.playerData.avgAccuracy}%");
+        if(PlayerDataHandler.Load())
+            Debug.Log($"Данные успешно загружены: {PlayerDataHandler.playerData.username}, {PlayerDataHandler.playerData.avgAccuracy}%");
+        
         InitializationGame();
     }
 
@@ -79,11 +81,6 @@ public class GameManager : MonoBehaviour
         {
             cloth.sphereColliders = clothColliders.ToArray();
         }
-    }
-
-    private void OnApplicationQuit()
-    {
-        PlayerDataHandler.Save();   
     }
 
     public void ResetGameState()
