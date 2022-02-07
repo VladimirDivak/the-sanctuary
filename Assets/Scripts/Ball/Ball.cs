@@ -122,6 +122,12 @@ public abstract class Ball : MonoBehaviour
     {
         StopCheckBallHight();
         c_chekBallHigh = StartCoroutine(ChekHigh());
+        if(c_ballOnAir != null)
+        {
+            StopCoroutine(c_ballOnAir);
+            c_ballOnAir = null;
+        }
+        c_ballOnAir = StartCoroutine(WaitingBallOnAir());
 
         onAir = true;
         rigidBody.isKinematic = false;
@@ -138,7 +144,6 @@ public abstract class Ball : MonoBehaviour
             StopCoroutine(c_ballOnAir);
             c_ballOnAir = null;
         }
-        c_ballOnAir = StartCoroutine(WaitingBallOnAir());
 
         parketHitCount = 0;
         onAir = false;
