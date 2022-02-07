@@ -78,7 +78,7 @@
 ### Кастомизация мяча
 При первом запуске игры пользователю будет предложено два варианта: ввод логина и пароля, либо создание нового аккаунта, после чего следует кастомизация внешнего вида мяча.
 
-![Ball Customize Menu](https://github.com/VladimirDivak/the-sanctuary/blob/master/GIFs/ball-settings.gif "Ball Customize Menu")
+![Ball Customize Menu](https://github.com/VladimirDivak/the-sanctuary/blob/master/GIFs/ballSettings.gif "Ball Customize Menu")
 ##### Пример мяча, созданного при регистрации нового аккаунта
 
 ### Геймплей
