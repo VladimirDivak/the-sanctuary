@@ -37,35 +37,35 @@ public static class PlayerDataHandler
 
     public static async Task SaveAsync()
     {
-        if(_accuracyData.Count != 0)
-        {
-            float accSum = 0;
-            foreach(float accuracy in _accuracyData)
-            {
-                accSum += accuracy;
-            }
-            accSum /= _accuracyData.Count;
-            if(playerData.avgAccuracy != 0)
-            {
-                playerData.avgAccuracy += accSum;
-                playerData.avgAccuracy /= 2;
-            }
-            else playerData.avgAccuracy = accSum;
-            playerData.avgAccuracy = MathF.Round(playerData.avgAccuracy, 1);
-        }
-        else playerData.avgAccuracy = 0;
-
         await Task.Run(()=>
         {
+            if(_accuracyData.Count != 0)
+            {
+                float accSum = 0;
+                foreach(float accuracy in _accuracyData)
+                {
+                    accSum += accuracy;
+                }
+                accSum /= _accuracyData.Count;
+                if(playerData.avgAccuracy != 0)
+                {
+                    playerData.avgAccuracy += accSum;
+                    playerData.avgAccuracy /= 2;
+                }
+                else playerData.avgAccuracy = accSum;
+                playerData.avgAccuracy = MathF.Round(playerData.avgAccuracy, 1);
+            }
+            else playerData.avgAccuracy = 0;
+
             using (FileStream fs = new FileStream(_saveDirectoryPath, FileMode.OpenOrCreate))
             {
                 _formatter.Serialize(fs, playerData);
             }
             Debug.Log($"Данные успешно сохранены. {_accuracyData.Count} бросков, средняя точность - {playerData.avgAccuracy}");
-        });
 
-        _accuracyData = null;
-        _accuracyData = new List<float>();
+            _accuracyData = null;
+            _accuracyData = new List<float>();
+        });
     }
 
     public static void AddAvgAccuracy(float lastValue) => _accuracyData.Add(lastValue);
