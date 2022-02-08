@@ -29,13 +29,13 @@ public static class PlayerDataHandler
         catch
         {
             playerData.username = "Vladimir Divak";
-            Save();
+            Task.Run(SaveAsync);
 
             return false;
         }
     }
 
-    public static async void Save()
+    public static async Task SaveAsync()
     {
         if(_accuracyData.Count != 0)
         {

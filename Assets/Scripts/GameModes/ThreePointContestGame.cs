@@ -168,14 +168,13 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
 
     public void EndGame()
     {
-        PlayerDataHandler.Save();
-
         siren.PlayEndGameSounds(()=>
         {
             Fade.Instance.ShowAfter(()=>
             {
+                Fade.Instance.actionTask = PlayerDataHandler.SaveAsync();
+                
                 PlayerController.Instance.ableToMoving = true;
-
                 foreach(BallsRack rack in FindObjectsOfType<BallsRack>())
                 {
                     Destroy(rack.gameObject);
