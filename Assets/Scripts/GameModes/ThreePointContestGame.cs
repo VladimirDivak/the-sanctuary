@@ -9,11 +9,11 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
 {
     enum ThreePointPosition
     {
-        Poisiton90,
-        Position45,
-        PositionCenter,
-        Positon45Minus,
-        Position90Minus
+        Poisiton90 = 180,
+        Position45 = 135,
+        PositionCenter = 90,
+        Positon45Minus = 45,
+        Position90Minus = 0
     }
 
     public bool isMultiplayer { get; set; }
@@ -61,6 +61,8 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
             Fade.Instance.actionTask = ChangeThrowPosition();
             GameManager.Instance.currentGameMode = this;
 
+            SpawnBallRacks();
+
             siren.PlayStartGameSounds(()=>
             {
                 PlayerController.
@@ -70,36 +72,25 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
         });
     }
 
+    void SpawnBallRacks()
+    {
+        ballRack.activeBalls = 5;
+        ballRack.useLastBall = true;
+
+        for(int i = (int)ThreePointPosition.Poisiton90; i > -1; i -= 45)
+        {
+            int rackAngle = i - 90;
+            if (_selectedScoreTrigger.name.Contains("Right")) rackAngle -= 180;
+
+            BallsRack rack = Instantiate(ballRack, GetThrowPosition((ThreePointPosition)i), Quaternion.Euler(Vector3.up * rackAngle));
+            Vector3 rackPosition = rack.transform.right * .5f - rack.transform.forward * .5f + rack.transform.position;
+            rack.transform.position = rackPosition;
+        }
+    }
+
     Vector3 GetThrowPosition(ThreePointPosition position)
     {
-        int angle = 0;
-        switch(position)
-        {
-            case ThreePointPosition.Poisiton90:
-                _currentPosition = ThreePointPosition.Poisiton90;
-                angle = 90;
-            break;
-
-            case ThreePointPosition.Position45:
-                _currentPosition = ThreePointPosition.Position45;
-                angle = 45;
-            break;
-
-            case ThreePointPosition.PositionCenter:
-                _currentPosition = ThreePointPosition.PositionCenter;
-                angle = 1;
-            break;
-
-            case ThreePointPosition.Positon45Minus:
-                _currentPosition = ThreePointPosition.Positon45Minus;
-                angle = -45;
-            break;
-
-            case ThreePointPosition.Position90Minus:
-                _currentPosition = ThreePointPosition.Position90Minus;
-                angle = -90;
-            break;
-        }
+        int angle = (int)position - 90;
 
         Vector3 distanceFromNet = _selectedScoreTrigger.transform.forward * _distanceToNet;
         distanceFromNet = new Vector3(distanceFromNet.x, 0, distanceFromNet.z);
@@ -110,51 +101,12 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
 
     async Task ChangeThrowPosition()
     {
-        ballRack.activeBalls = 5;
-        ballRack.useLastBall = true;
-
-        if(_currentBallRack != null)
-        {
-            Destroy(_currentBallRack.gameObject);
-            _currentBallRack = null;
-        }
-
-        float angle = 0;
-        float rackAngle = 0;
+        float angle = 360 - (int)_currentPosition;
         PlayerController.Instance.position = GetThrowPosition(_currentPosition);
-
-        switch(_currentPosition)
-        {
-            case ThreePointPosition.Poisiton90:
-            angle = 180;
-            rackAngle = 90;
-            break;
-
-            case ThreePointPosition.Position45:
-            angle = 180 + 45;
-            rackAngle = 90 - 45;
-            break;
-
-            case ThreePointPosition.PositionCenter:
-            angle = 180 + 90;
-            rackAngle = 90 - 90;
-            break;
-
-            case ThreePointPosition.Positon45Minus:
-            angle = 180 + 135;
-            rackAngle = 90 - 135;
-            break;
-
-            case ThreePointPosition.Position90Minus:
-            angle = 180 + 180;
-            rackAngle = 90 - 180;
-            break;
-        }
 
         if (_selectedScoreTrigger.name.Contains("Right"))
         {
             angle -= 180;
-            rackAngle -= 180;
         }
 
         Quaternion playerRotation = Quaternion.Euler(Vector3.forward * angle);
@@ -167,17 +119,6 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
         PlayerController.Instance.rotation = Quaternion.Euler(currentRotation.x,
             currentRotation.y,
             currentRotation.z + _selectedScoreTrigger.angleForGames);
-        
-        Vector3 rackPosition = PlayerController.Instance.cameraTransform.right * 0.5f +
-            PlayerController.Instance.cameraTransform.forward * 0.5f +
-            PlayerController.Instance.position;
-
-        rackPosition = new Vector3(rackPosition.x, 0, rackPosition.z);
-
-        _currentBallRack = Instantiate(
-            ballRack,
-            rackPosition,
-            Quaternion.Euler(new Vector3(0, rackAngle, 0)));
     }
 
     public string GetGameDiscription()
@@ -187,6 +128,7 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
     
     public void OnBallThrow()
     {
+        Debug.Log(_currentPosition);
         _throwsCounter++;
     }
 
@@ -198,7 +140,7 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
         {
             if(_throwsCounter != 25 && _currentPosition != ThreePointPosition.Position90Minus)
             {
-                _currentPosition++;
+                _currentPosition -= 45;
                 Fade.Instance.ShowAfter(()=> Fade.Instance.actionTask = ChangeThrowPosition());
             }
             else EndGame();
@@ -217,7 +159,7 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
         {
             if(_throwsCounter != 25 && _currentPosition != ThreePointPosition.Position90Minus)
             {
-                _currentPosition++;
+                _currentPosition -= 45;
                 Fade.Instance.ShowAfter(()=> Fade.Instance.actionTask = ChangeThrowPosition());
             }
             else EndGame();
@@ -234,7 +176,10 @@ public class ThreePointContestGame : MonoBehaviour, IGameMode
             {
                 PlayerController.Instance.ableToMoving = true;
 
-                Destroy(_currentBallRack.gameObject);
+                foreach(BallsRack rack in FindObjectsOfType<BallsRack>())
+                {
+                    Destroy(rack.gameObject);
+                }
                 _currentBallRack = null;
                 _currentPosition = ThreePointPosition.Poisiton90;
                 _throwsCounter = 0;

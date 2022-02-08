@@ -71,7 +71,7 @@ public class PlayerController : MonoBehaviour
     void Awake()
     {
         _gyroscope = Input.gyro;
-        _gyroscope.updateInterval = 0.05f;
+        _gyroscope.updateInterval = 0.2f;
         _gyroscope.enabled = true;
     }
 
@@ -115,7 +115,7 @@ public class PlayerController : MonoBehaviour
 
                     if(Physics.Raycast(ray, out RaycastHit hitData, Mathf.Infinity))
                     {
-                        if (hitData.transform.TryGetComponent<PlayerBall>(out var myBall))
+                        if (hitData.transform.TryGetComponent<PlayerBall>(out PlayerBall myBall))
                         {
                             if(currentBall == null)
                             {
@@ -149,7 +149,7 @@ public class PlayerController : MonoBehaviour
                 {
                     if (currentBall != null && currentBall.shootingMode)
                     {
-                        if(sumAccuracy != 0)
+                        if(sumAccuracy != 0 && currentScoreTrigger.correctAngle)
                         {
                             uiAccValue.gameObject.SetActive(true);
                             uiAccValue.ShowAccuracyValue(

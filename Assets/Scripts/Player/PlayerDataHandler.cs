@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using TheSanctuary;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Runtime.Serialization.Formatters.Binary;
 
@@ -34,7 +35,7 @@ public static class PlayerDataHandler
         }
     }
 
-    public static void Save()
+    public static async void Save()
     {
         if(_accuracyData.Count != 0)
         {
@@ -54,12 +55,15 @@ public static class PlayerDataHandler
         }
         else playerData.avgAccuracy = 0;
 
-        using (FileStream fs = new FileStream(_saveDirectoryPath, FileMode.OpenOrCreate))
+        await Task.Run(()=>
         {
-            _formatter.Serialize(fs, playerData);
-        }
+            using (FileStream fs = new FileStream(_saveDirectoryPath, FileMode.OpenOrCreate))
+            {
+                _formatter.Serialize(fs, playerData);
+            }
+            Debug.Log($"Данные успешно сохранены. {_accuracyData.Count} бросков, средняя точность - {playerData.avgAccuracy}");
+        });
 
-        Debug.Log($"Данные успешно сохранены. {_accuracyData.Count} бросков, средняя точность - {playerData.avgAccuracy}");
         _accuracyData = null;
         _accuracyData = new List<float>();
     }
