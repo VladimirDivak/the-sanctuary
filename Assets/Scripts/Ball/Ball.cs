@@ -64,11 +64,11 @@ public abstract class Ball : MonoBehaviour
         {
             ableToGrabbing = GameManager.Instance.
                 currentGameMode.
-                blockBallGrabbing;
+                useBlockBallGrabbing;
 
             destroyAfter = GameManager.Instance.
                 currentGameMode.
-                destroyBallAfter;
+                useBlockBallGrabbing;
         }
     }
 

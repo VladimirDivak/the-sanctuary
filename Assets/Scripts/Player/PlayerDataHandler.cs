@@ -1,9 +1,13 @@
 using System;
 using System.IO;
-using TheSanctuary;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Runtime.Serialization.Formatters.Binary;
+
+using TheSanctuary;
+using TheSanctuary.Network;
+using TheSanctuary.Interfaces;
 
 using UnityEngine;
 
@@ -29,6 +33,11 @@ public static class PlayerDataHandler
         catch
         {
             playerData.username = "Vladimir Divak";
+
+            NetworkGame threePointGameData = new NetworkGame();
+            threePointGameData.name = nameof(ThreePointContestGame);
+            playerData.multiplayerGamesData.Add(threePointGameData);
+            
             Task.Run(SaveAsync);
 
             return false;
@@ -69,4 +78,11 @@ public static class PlayerDataHandler
     }
 
     public static void AddAvgAccuracy(float lastValue) => _accuracyData.Add(lastValue);
+    public static void UpdateNetworkGameData(NetworkGame data, string game)
+    {
+        NetworkGame dataForUpdate = playerData.multiplayerGamesData.Find(x => x.name == game);
+        int dataIndex = playerData.multiplayerGamesData.IndexOf(dataForUpdate);
+
+        playerData.multiplayerGamesData[dataIndex] = data;
+    }
 }
