@@ -22,7 +22,8 @@ public abstract class Ball : MonoBehaviour
 
     protected bool ballOnParket;
 
-    public int parketHitCount { get; protected set; }
+    public int hitCounter { get; protected set; }
+    public int parketHitCounter { get; protected set; }
 
     Coroutine c_ballOnAir;
     Coroutine c_chekBallHigh;
@@ -43,6 +44,7 @@ public abstract class Ball : MonoBehaviour
     public string propThrowPower { get; private set; } = "_ThrowPower";
     public string propIsLastBall { get; private set; } = "_IsLastBall";
 
+    public void AddImpulseAfterScore() => rigidBody.AddForce(Vector3.up * Random.Range(6f, 10f), ForceMode.Impulse); 
     public void ChangeColor(Color color) => _baseMaterial.SetColor(propColor, color);
     public void SetEmission(int value) => _baseMaterial.SetInt(propUseEmmision, value);
     public void ChangeEmissionColor (Color color) => _baseMaterial.SetColor(propEmissionColor, color);
@@ -85,12 +87,14 @@ public abstract class Ball : MonoBehaviour
     {
         if (collision.relativeVelocity.magnitude > 0.1f)
         {
+            hitCounter++;
+
             bouncesSource.clip = BouncesSound[Random.Range(0, BouncesSound.Count)];
             bouncesSource.Play();
 
             if (collision.transform.tag == "Parket")
             {
-                if(parketHitCount == 0)
+                if(parketHitCounter == 0)
                 {
                     if(GameManager.Instance.currentGameMode != null)
                     {
@@ -100,7 +104,7 @@ public abstract class Ball : MonoBehaviour
                 }
 
                 ballOnParket = true;
-                parketHitCount++;
+                parketHitCounter++;
 
                 if (c_ballOnAir != null)
                 {
@@ -145,7 +149,8 @@ public abstract class Ball : MonoBehaviour
             c_ballOnAir = null;
         }
 
-        parketHitCount = 0;
+        hitCounter = 0;
+        parketHitCounter = 0;
         onAir = false;
         rigidBody.isKinematic = true;
 

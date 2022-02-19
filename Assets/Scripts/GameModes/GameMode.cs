@@ -24,22 +24,27 @@ public abstract class GameMode : MonoBehaviour, IGameMode
     protected ScoreTrigger selectedScoreTrigger;
 
     public NetworkGame gameInformation { get; set; }
+
     public bool isMultiplayer { get; set; }
-    public int scoreMultiplier { get; set; }
+    public uint scoreMultiplier { get; set; } = 1;
+    protected uint scoreStandart { get; set; } = 100;
+    protected uint scoreGoodAccuracy { get; set; } = 500;
+    protected uint scorePerfectAccuracy { get; set; } = 1000;
+    protected uint goodScoresCounter { get; set; }
+
     public bool useBlockBallGrabbing { get; set; }
     public bool UseDestroyBallAfterThrow { get; set; }
-    public ushort currentGameTime { get; set; }
+    public float currentGameTime { get; set; }
     public uint currentGameScores { get; set; }
 
-    protected const float threePointLineDistance = 7f;
-    protected const float freeThrowLineDistance = 4.6f;
+    const float threePointLineDistance = 7f;
+    const float freeThrowLineDistance = 4.6f;
     
     protected int throwsCounter;
     protected bool isScore;
     protected ThreePointPosition currentThreePointPosition { get; set; }
 
-    private static CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-    private CancellationToken _cancellationToken = _cancellationTokenSource.Token;
+    protected Coroutine c_GameTotalTimeCounter;
 
     protected virtual Vector3 GetThrowPosition(ThreePointPosition position)
     {
@@ -49,7 +54,8 @@ public abstract class GameMode : MonoBehaviour, IGameMode
         distanceFromNet = new Vector3(distanceFromNet.x, 0, distanceFromNet.z);
         distanceFromNet = Quaternion.Euler(Vector3.up * angle) * distanceFromNet;
 
-        return distanceFromNet + new Vector3(selectedScoreTrigger.transform.position.x, 0, selectedScoreTrigger.transform.position.z);
+        var selectedTriggerPos = selectedScoreTrigger.transform.position;
+        return distanceFromNet + new Vector3(selectedTriggerPos.x, 0, selectedTriggerPos.z);
     }
 
     protected virtual async Task ChangeThrowPosition()
@@ -57,18 +63,15 @@ public abstract class GameMode : MonoBehaviour, IGameMode
         await Task.Yield();
     }
 
-    protected async Task StartTimer()
+    protected IEnumerator TotalGameTimeCounterRoutine()
     {
-        while(!_cancellationToken.IsCancellationRequested)
+        while(true)
         {
-            currentGameTime++;
-            await Task.Delay(1, _cancellationToken);
+            currentGameTime += Time.deltaTime;
+            currentGameTime = System.MathF.Round(currentGameTime, 2);
+            Debug.Log(currentGameTime);
+            yield return null;
         }
-    }
-
-    public void SetNetworkGameData(NetworkGame gameData)
-    {
-        gameInformation = gameData;
     }
 
     public virtual string GetGameDiscription()
@@ -77,14 +80,57 @@ public abstract class GameMode : MonoBehaviour, IGameMode
     }
 
     public virtual void StartGame() { }
+    public virtual void OnGetScore()
+    {
+        uint score = 0;
+
+        int accuracy = PlayerController.Instance.roundAccuracy;
+        isScore = true;
+
+        if(accuracy < 90)
+        {
+            scoreMultiplier = 1;
+            score = scoreStandart;
+        }
+        else if(accuracy > 95 && accuracy < 100)
+        {
+            score = scoreGoodAccuracy;
+            goodScoresCounter++;
+            if(goodScoresCounter % 3 == 0) scoreMultiplier++;
+        }
+        else if(accuracy == 100)
+        {
+            goodScoresCounter++;
+            if(goodScoresCounter % 3 == 0) scoreMultiplier++;
+
+            score = scorePerfectAccuracy;
+            scoreMultiplier++;
+        }
+
+        currentGameScores += score * scoreMultiplier;
+        Debug.Log($"очков: {currentGameScores}. точность броска: {accuracy}. множитель: {scoreMultiplier}");
+    }
+    public virtual void OnBallGetParket()
+    {
+        if(!isScore)
+        {
+            scoreMultiplier = 1;
+            goodScoresCounter = 0;
+        }
+    }
+    public virtual void OnBallThrow()
+    {
+        throwsCounter++;
+    }
 
     public virtual void EndGame()
     {
-        _cancellationTokenSource.Cancel();
+        StopCoroutine(c_GameTotalTimeCounter);
+        c_GameTotalTimeCounter = null;
 
-        if(currentGameTime > gameInformation.bestTime)
+        if(currentGameTime < gameInformation.bestTime || gameInformation.bestScore == 0)
         {
-            Debug.Log($"Новый рекорд - {currentGameTime / 1000} секунд!");
+            Debug.Log($"Новый рекорд - {currentGameTime} секунд!");
             gameInformation.bestTime = currentGameTime;
         }
 
@@ -93,9 +139,18 @@ public abstract class GameMode : MonoBehaviour, IGameMode
             Debug.Log($"Новый рекорд - {currentGameScores} очков!");
             gameInformation.bestScore = currentGameScores;
         }
+
+        Debug.Log($"Время: {currentGameTime}. Очки: {currentGameScores}.");
     }
 
-    public virtual void OnGetScore() { }
-    public virtual void OnBallGetParket() { }
-    public virtual void OnBallThrow() { }
+    protected void Reset()
+    {
+        throwsCounter = 0;
+        scoreMultiplier = 1;
+        currentGameScores = 0;
+        currentGameTime = 0;
+
+        GameManager.Instance.currentGameMode = null;
+        GameManager.Instance.ResetGameState();
+    }
 }

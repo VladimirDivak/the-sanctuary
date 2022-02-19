@@ -15,7 +15,6 @@ public class BallsRack : MonoBehaviour
     [Space]
     public int activeBalls;
     [SerializeField] GameObject[] balls;
-    [SerializeField] bool ableToUse = true;
 
     [SerializeField] public UnityEvent OnRackIsEmpty;
 

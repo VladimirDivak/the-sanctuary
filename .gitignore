@@ -2,6 +2,7 @@
 /.vscode
 /.idea
 /Assets/AddressableAssetsData
+/Assets/Animations
 /Assets/AssetBundles
 /Assets/BundlesFiles
 /Assets/DownloadBundles
@@ -22,24 +23,6 @@
 /Assets/URPSettings
 /Assets/Video
 /Assets/Scripts/Network/Plugins
-/Assets/AssetBundles.meta
-/Assets/BundlesFiles.meta
-/Assets/DownloadBundles.meta
-/Assets/Editor.meta
-/Assets/Fonts.meta
-/Assets/Libs.meta
-/Assets/Materials.meta
-/Assets/Models.meta
-/Assets/Music.meta
-/Assets/Prefabs.meta
-/Assets/Semples.meta
-/Assets/Scenes.meta
-/Assets/Shaders.meta
-/Assets/Sound.meta
-/Assets/TextMesh Pro.meta
-/Assets/Textures.meta
-/Assets/URPSettings.meta
-/Assets/Video.meta
 /Library
 /Logs
 /obj
@@ -47,9 +30,6 @@
 /ProjectSettings
 /UserSettings
 /Temp
-Assembly-CSharp.csproj
-Assembly-CSharp-Editor.csproj
-theSanctuary.sln
 *.meta
 *.tsntry
 *.blob

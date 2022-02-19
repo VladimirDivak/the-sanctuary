@@ -17,7 +17,7 @@ public static class PlayerDataHandler
     private static List<float> _accuracyData = new List<float>();
 
     private static readonly BinaryFormatter _formatter = new BinaryFormatter();
-    private static readonly string _saveDirectoryPath = Application.persistentDataPath + "/plrd.dat";
+    private static readonly string _saveDirectoryPath = Application.persistentDataPath + "/plrd.sv";
 
     public static bool Load()
     {
@@ -27,19 +27,12 @@ public static class PlayerDataHandler
             {
                 playerData = (PlayerData)_formatter.Deserialize(fs);
             }
-
             return true;
         }
         catch
         {
             playerData.username = "Vladimir Divak";
-
-            NetworkGame threePointGameData = new NetworkGame();
-            threePointGameData.name = nameof(ThreePointContestGame);
-            playerData.multiplayerGamesData.Add(threePointGameData);
-            
             Task.Run(SaveAsync);
-
             return false;
         }
     }
@@ -78,6 +71,20 @@ public static class PlayerDataHandler
     }
 
     public static void AddAvgAccuracy(float lastValue) => _accuracyData.Add(lastValue);
+
+    public static NetworkGame GetNetworkGameData(string name)
+    {
+        if(playerData.multiplayerGamesData != null && playerData.multiplayerGamesData.Count(x => x.name == name) != 0)
+            return playerData.multiplayerGamesData.Find(x => x.name == name);
+        else
+        {
+            NetworkGame newGameData = new NetworkGame();
+            newGameData.name = name;
+            playerData.multiplayerGamesData.Add(newGameData);
+
+            return newGameData;
+        }
+    }
     public static void UpdateNetworkGameData(NetworkGame data, string game)
     {
         NetworkGame dataForUpdate = playerData.multiplayerGamesData.Find(x => x.name == game);

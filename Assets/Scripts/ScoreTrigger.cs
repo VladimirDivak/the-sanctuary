@@ -66,6 +66,8 @@ public class ScoreTrigger : MonoBehaviour
             ball.StopCheckBallHight();
             if(ball.ballCorrectHigh == true)
             {
+                if(ball.hitCounter == 0) ball.AddImpulseAfterScore();
+                
                 if(GameManager.Instance.currentGameMode != null)
                 {
                     GameManager

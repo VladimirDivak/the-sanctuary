@@ -30,6 +30,8 @@ public class GUI : MonoBehaviour
     private static GameObject _crosshair;
     private GameObject _currentPointCamElement;
 
+    [SerializeField] UICrosshair crosshair;
+
     [SerializeField] public GameObject PopUpPanel;
     [SerializeField] public Sprite[] PopUpIcons;
     [SerializeField] public GameObject PointCamElement;
@@ -37,37 +39,18 @@ public class GUI : MonoBehaviour
     [HideInInspector] public GameObject PopUpIcon;
     [HideInInspector] public GameObject PopUpContainer;
 
-    //  метод создаёт в углу интерфеса изображение с камеры, следующей
-    //  за мячом в момент броска
-    public void SetActivePointCam(bool isActive, Transform CurrentBall)
+    public void ShowCrosshair()
     {
-        if(isActive)
-        {
-            RectTransform Rect;
+        crosshair.Show();
+    }
 
-            _currentPointCamElement = Instantiate(PointCamElement, new Vector2(Screen.width - 145, Screen.height - 145), Quaternion.identity);
-            Rect = _currentPointCamElement.GetComponent<RectTransform>();
-            Rect.SetParent(this.transform);
-        }
-        else
-        {
-            Destroy(_currentPointCamElement);
-            _currentPointCamElement = null;
-        }
+    public void HideCrosshair()
+    {
+        crosshair.Hide();
     }
 
     void Start()
     {
         Instance = this;
-
-        PopUpContainer = GameObject.Find("PopupContainer");
-
-        _crosshair = GameObject.Find("Crosshair");
-        _crosshair.SetActive(false);
-    }
-
-    public static void ShowGameUI(bool itsTrue)
-    {
-        _crosshair.SetActive(itsTrue);
     }
 }

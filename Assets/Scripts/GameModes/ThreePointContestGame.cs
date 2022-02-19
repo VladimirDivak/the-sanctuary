@@ -9,7 +9,6 @@ using UnityEngine;
 public class ThreePointContestGame : GameMode
 {
     [SerializeField] BallsRack ballRack;
-    BallsRack _currentBallRack;
 
     void Start()
     {
@@ -19,6 +18,7 @@ public class ThreePointContestGame : GameMode
 
     public override void StartGame()
     {
+        gameInformation = PlayerDataHandler.GetNetworkGameData(nameof(ThreePointContestGame));
         currentThreePointPosition = ThreePointPosition.Poisiton90;
 
         Fade.Instance.ShowAfter(() =>
@@ -40,13 +40,13 @@ public class ThreePointContestGame : GameMode
 
             SpawnBallRacks();
 
-            sirenSoundHandler.PlayStartGameSounds(async ()=>
+            sirenSoundHandler.PlayStartGameSounds(()=>
             {
                 PlayerController.
                     Instance.
                     ableToRaycast = true;
                 
-                await StartTimer();
+                c_GameTotalTimeCounter = StartCoroutine(TotalGameTimeCounterRoutine());
             });
         });
     }
@@ -62,8 +62,9 @@ public class ThreePointContestGame : GameMode
             if (selectedScoreTrigger.name.Contains("Right")) rackAngle -= 180;
 
             BallsRack rack = Instantiate(ballRack, GetThrowPosition((ThreePointPosition)i), Quaternion.Euler(Vector3.up * rackAngle));
-            Vector3 rackPosition = rack.transform.right * .5f - rack.transform.forward * .5f + rack.transform.position;
-            rack.transform.position = rackPosition;
+            Transform rackTransform = rack.transform;
+            Vector3 rackPosition = rackTransform.right * .5f - rackTransform.forward * .5f + rackTransform.position;
+            rackTransform.position = rackPosition;
         }
     }
 
@@ -88,17 +89,11 @@ public class ThreePointContestGame : GameMode
             currentRotation.y,
             currentRotation.z + selectedScoreTrigger.angleForGames);
     }
-    
-    public override void OnBallThrow()
-    {
-        Debug.Log(currentThreePointPosition);
-        throwsCounter++;
-    }
 
     public override void OnGetScore()
     {
-        isScore = true;
-
+        base.OnGetScore();
+        
         if(throwsCounter % 5 == 0)
         {
             if(throwsCounter != 25 && currentThreePointPosition != ThreePointPosition.Position90Minus)
@@ -112,6 +107,8 @@ public class ThreePointContestGame : GameMode
 
     public override void OnBallGetParket()
     {
+        base.OnBallGetParket();
+
         if(isScore)
         {
             isScore = false;
@@ -145,12 +142,9 @@ public class ThreePointContestGame : GameMode
                 {
                     Destroy(rack.gameObject);
                 }
-                _currentBallRack = null;
                 currentThreePointPosition = ThreePointPosition.Poisiton90;
-                throwsCounter = 0;
 
-                GameManager.Instance.currentGameMode = null;
-                GameManager.Instance.ResetGameState();
+                Reset();
             });
         });
     }

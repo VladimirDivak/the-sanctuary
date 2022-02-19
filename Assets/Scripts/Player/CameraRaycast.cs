@@ -8,10 +8,7 @@ using UnityEngine;
 public class CameraRaycast : MonoBehaviour
 {
     public static CameraRaycast Instance { get; private set; }
-
     public static Transform cameraTransform;
-
-    private bool _ableToClick = true;
     private Camera _currentCamera;
 
     public static Vector3 ballForce;

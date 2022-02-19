@@ -44,6 +44,7 @@ public class PlayerController : MonoBehaviour
     public float touchAccuracy { get; private set; }
     public float shootAccuracy { get; private set; }
     public float sumAccuracy => touchAccuracy * shootAccuracy;
+    public int roundAccuracy { get; private set; }
 
     private Transform _controllerTransform;
 
@@ -91,13 +92,15 @@ public class PlayerController : MonoBehaviour
         shootAccuracy = 1f - Mathf.Clamp(shootAccuracy, 0f, 1f);
         shootAccuracy = System.MathF.Round(shootAccuracy, 2);
 
-        cameraTransform.localRotation = new Quaternion
+        Quaternion gyroRotation = new Quaternion
         (
             _gyroscope.attitude.x,
             _gyroscope.attitude.y,
             -_gyroscope.attitude.z,
             -_gyroscope.attitude.w
         );
+
+        cameraTransform.localRotation = Quaternion.Lerp(cameraTransform.localRotation, gyroRotation, 15 * Time.deltaTime);
 
         if(Input.touches.Length > 0)
         {
@@ -133,6 +136,7 @@ public class PlayerController : MonoBehaviour
 								_correctTouchPosition = new Vector2(firstTouchPosition.x, randomY);
                                 
                                 currentScoreTrigger.SetShootingMode(true);
+                                GUI.Instance.ShowCrosshair();
                             }
                         }
 
@@ -151,13 +155,17 @@ public class PlayerController : MonoBehaviour
                     {
                         if(sumAccuracy != 0 && currentScoreTrigger.correctAngle)
                         {
+                            roundAccuracy = Mathf.RoundToInt(sumAccuracy * 100);
+
                             uiAccValue.gameObject.SetActive(true);
                             uiAccValue.ShowAccuracyValue(
-                                Mathf.RoundToInt(sumAccuracy * 100),
+                                roundAccuracy,
                                 System.MathF.Round(sumAccuracy, 1));
                         }
 
                         currentBall.PhysicEnable();
+                        GUI.Instance.HideCrosshair();
+                        
                         GameManager.Instance.currentGameMode?.OnBallThrow();
                         currentBall = null;
                         touchAccuracy = 0;
