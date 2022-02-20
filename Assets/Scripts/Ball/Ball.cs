@@ -61,17 +61,6 @@ public abstract class Ball : MonoBehaviour
         bouncesSource = GetComponent<AudioSource>();
 
         GameManager.Instance.AddColliderForNet(GetComponent<SphereCollider>());
-
-        if(GameManager.Instance.currentGameMode != null)
-        {
-            ableToGrabbing = GameManager.Instance.
-                currentGameMode.
-                useBlockBallGrabbing;
-
-            destroyAfter = GameManager.Instance.
-                currentGameMode.
-                useBlockBallGrabbing;
-        }
     }
 
     public void StopCheckBallHight()
@@ -96,11 +85,14 @@ public abstract class Ball : MonoBehaviour
             {
                 if(parketHitCounter == 0)
                 {
-                    if(GameManager.Instance.currentGameMode != null)
+                    if(this is PlayerBall)
                     {
-                        GameManager.Instance.currentGameMode.OnBallGetParket();
+                        if(GameManager.Instance.currentGameMode != null)
+                        {
+                            GameManager.Instance.currentGameMode.OnBallGetParket();
+                        }
+                        if(destroyAfter) DestroyBall();
                     }
-                    if(destroyAfter) DestroyBall();
                 }
 
                 ballOnParket = true;

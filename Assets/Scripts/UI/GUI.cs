@@ -25,32 +25,51 @@ public enum PopUpMessageType
 
 public class GUI : MonoBehaviour
 {
-    public static GUI Instance { get; private set; }
+    [SerializeField] UICrosshair _crosshair;
+    [SerializeField] UIScoreboard _scoreboard;
+    [SerializeField] UITimer _timer;
+    [SerializeField] UIAnimatedValue _accuracy;
+    [SerializeField] UIAnimatedValue _points;
+    [SerializeField] UIBestIdicators _bestIndicators;
 
-    private static GameObject _crosshair;
-    private GameObject _currentPointCamElement;
+    [SerializeField] GameObject PopUpPanel;
+    [SerializeField] Sprite[] PopUpIcons;
+    [SerializeField] GameObject PointCamElement;
 
-    [SerializeField] UICrosshair crosshair;
+    [HideInInspector] GameObject PopUpIcon;
+    [HideInInspector] GameObject PopUpContainer;
 
-    [SerializeField] public GameObject PopUpPanel;
-    [SerializeField] public Sprite[] PopUpIcons;
-    [SerializeField] public GameObject PointCamElement;
+    public static UICrosshair crosshair;
+    public static UIScoreboard scoreboard;
+    public static UITimer timer;
+    public static UIAnimatedValue accuracy;
+    public static UIAnimatedValue points;
+    public static UIBestIdicators bestIndicators;
 
-    [HideInInspector] public GameObject PopUpIcon;
-    [HideInInspector] public GameObject PopUpContainer;
-
-    public void ShowCrosshair()
+    void Awake()
     {
-        crosshair.Show();
+        crosshair = _crosshair;
+        scoreboard = _scoreboard;
+        timer = _timer;
+        points = _points;
+        accuracy = _accuracy;
+        bestIndicators = _bestIndicators;
     }
 
-    public void HideCrosshair()
+    public static void ShowCrosshair(bool value)
     {
-        crosshair.Hide();
+        crosshair.SetActive(value);
     }
 
-    void Start()
+    public static void ShowScoreboard(bool value)
     {
-        Instance = this;
+        if(value == false) scoreboard.Reset();
+        scoreboard.gameObject.SetActive(value);
+    }
+
+    public static void ShowTimer(bool value)
+    {
+        if(value == false) timer.Reset();
+        timer.gameObject.SetActive(value);
     }
 }

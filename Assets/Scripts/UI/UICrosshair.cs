@@ -12,13 +12,9 @@ public class UICrosshair : MonoBehaviour
         _animator = GetComponent<Animator>();
     }
 
-    public void Show()
+    public void SetActive(bool value)
     {
-        _animator.SetBool("Show", true); 
-    }
-
-    public void Hide()
-    {
-        _animator.SetBool("Show", false);
+       if(value) _animator.Play("Show");
+       else _animator.Play("Hide");
     }
 }

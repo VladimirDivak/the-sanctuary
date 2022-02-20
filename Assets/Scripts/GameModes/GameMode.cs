@@ -26,16 +26,20 @@ public abstract class GameMode : MonoBehaviour, IGameMode
     public NetworkGame gameInformation { get; set; }
 
     public bool isMultiplayer { get; set; }
-    public uint scoreMultiplier { get; set; } = 1;
-    protected uint scoreStandart { get; set; } = 100;
-    protected uint scoreGoodAccuracy { get; set; } = 500;
-    protected uint scorePerfectAccuracy { get; set; } = 1000;
-    protected uint goodScoresCounter { get; set; }
+    public int scoreMultiplier { get; set; } = 1;
+    protected int scoreStandart { get; set; } = 100;
+    protected int scoreGoodAccuracy { get; set; } = 250;
+    protected int scorePerfectAccuracy { get; set; } = 500;
+    protected int goodScoresCounter { get; set; }
+
+    public float timeToStartThrowing { get; set; }
+    public float timeToReleaseThrowing { get; set; }
+    float timeBetweenStartEndReleaseThrowing => timeToReleaseThrowing - timeToStartThrowing;
 
     public bool useBlockBallGrabbing { get; set; }
     public bool UseDestroyBallAfterThrow { get; set; }
     public float currentGameTime { get; set; }
-    public uint currentGameScores { get; set; }
+    public int currentGameScores { get; set; }
 
     const float threePointLineDistance = 7f;
     const float freeThrowLineDistance = 4.6f;
@@ -63,13 +67,19 @@ public abstract class GameMode : MonoBehaviour, IGameMode
         await Task.Yield();
     }
 
+    protected void SetBestIndicatorsData()
+    {
+        GUI.bestIndicators.SetData(GUI.timer.ConvertToTimeValue(gameInformation.bestTime), gameInformation.bestScore.ToString());
+        GUI.bestIndicators.gameObject.SetActive(true);
+    }
+
     protected IEnumerator TotalGameTimeCounterRoutine()
     {
         while(true)
         {
             currentGameTime += Time.deltaTime;
-            currentGameTime = System.MathF.Round(currentGameTime, 2);
-            Debug.Log(currentGameTime);
+            GUI.timer.SetValue(currentGameTime);
+
             yield return null;
         }
     }
@@ -79,20 +89,24 @@ public abstract class GameMode : MonoBehaviour, IGameMode
         return string.Empty;
     }
 
-    public virtual void StartGame() { }
+    public virtual void StartGame()
+    {
+
+    }
+
     public virtual void OnGetScore()
     {
-        uint score = 0;
+        int score = 0;
 
         int accuracy = PlayerController.Instance.roundAccuracy;
         isScore = true;
 
-        if(accuracy < 90)
+        if(accuracy < 95)
         {
             scoreMultiplier = 1;
             score = scoreStandart;
         }
-        else if(accuracy > 95 && accuracy < 100)
+        else if(accuracy >= 95 && accuracy < 100)
         {
             score = scoreGoodAccuracy;
             goodScoresCounter++;
@@ -107,8 +121,15 @@ public abstract class GameMode : MonoBehaviour, IGameMode
             scoreMultiplier++;
         }
 
-        currentGameScores += score * scoreMultiplier;
-        Debug.Log($"очков: {currentGameScores}. точность броска: {accuracy}. множитель: {scoreMultiplier}");
+        var x1 = accuracy / 100f;
+        var x2 = score - (timeBetweenStartEndReleaseThrowing * 10);
+        var x3 = scoreMultiplier;
+
+        int additionalPoints = Mathf.RoundToInt(x1 * x2 * x3);
+        currentGameScores += additionalPoints;
+        
+        GUI.scoreboard.UpdateScores(currentGameScores, scoreMultiplier);
+        GUI.points.ShowValue($"+{additionalPoints}");
     }
     public virtual void OnBallGetParket()
     {
@@ -116,10 +137,20 @@ public abstract class GameMode : MonoBehaviour, IGameMode
         {
             scoreMultiplier = 1;
             goodScoresCounter = 0;
+
+            GUI.scoreboard.UpdateScores(currentGameScores, scoreMultiplier);
         }
     }
     public virtual void OnBallThrow()
     {
+        GUI.accuracy.ShowValue
+        (
+            PlayerController.Instance.roundAccuracy,
+            System.MathF.Round(PlayerController.Instance.sumAccuracy,
+            1)
+        );
+
+        isScore = false;
         throwsCounter++;
     }
 
@@ -149,6 +180,11 @@ public abstract class GameMode : MonoBehaviour, IGameMode
         scoreMultiplier = 1;
         currentGameScores = 0;
         currentGameTime = 0;
+        isScore = false;
+
+        GUI.ShowScoreboard(false);
+        GUI.ShowTimer(false);
+        GUI.bestIndicators.gameObject.SetActive(false);
 
         GameManager.Instance.currentGameMode = null;
         GameManager.Instance.ResetGameState();

@@ -38,7 +38,9 @@
   <ItemGroup>
      <Compile Include="Assets/Scripts/UI/BackgroundCameraAnimation.cs" />
      <Compile Include="Assets/Scripts/UI/UIBaseAnimation.cs" />
+     <Compile Include="Assets/Scripts/UI/UITimer.cs" />
      <Compile Include="Assets/Scripts/UI/UICrosshair.cs" />
+     <Compile Include="Assets/Scripts/UI/UIScoreboard.cs" />
      <Compile Include="Assets/Scripts/UI/PointCam.cs" />
      <Compile Include="Assets/Scripts/Ball/PlayerBall.cs" />
      <Compile Include="Assets/Scripts/RaycastEventHandler.cs" />
@@ -56,11 +58,13 @@
      <Compile Include="Assets/Scripts/ScoreTrigger.cs" />
      <Compile Include="Assets/Scripts/GameManager.cs" />
      <Compile Include="Assets/Scripts/Player/CameraRaycast.cs" />
-     <Compile Include="Assets/Scripts/UI/AccuracyValue.cs" />
      <Compile Include="Assets/Scripts/AudioPlayer/AudioPlayer.cs" />
+     <Compile Include="Assets/Scripts/UI/UIAnimatedValue.cs" />
+     <Compile Include="Assets/Scripts/UI/UIBestIdicators.cs" />
      <None Include="Assets/TextMesh Pro/Resources/Shaders/TMPro.cginc" />
      <None Include="Assets/TextMesh Pro/Resources/Shaders/TMP_SDF-Mobile Overlay.shader" />
      <None Include="Assets/TextMesh Pro/Resources/Shaders/TMP_Bitmap.shader" />
+     <None Include="Assets/AddressableAssetsData/link.xml" />
      <None Include="Assets/TextMesh Pro/Resources/Shaders/TMP_SDF-Surface-Mobile.shader" />
      <None Include="Assets/TextMesh Pro/Resources/Shaders/TMP_SDF-Surface.shader" />
      <None Include="Assets/TextMesh Pro/Sprites/EmojiOne Attribution.txt" />

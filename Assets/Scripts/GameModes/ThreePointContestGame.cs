@@ -18,11 +18,16 @@ public class ThreePointContestGame : GameMode
 
     public override void StartGame()
     {
+        base.StartGame();
         gameInformation = PlayerDataHandler.GetNetworkGameData(nameof(ThreePointContestGame));
         currentThreePointPosition = ThreePointPosition.Poisiton90;
 
         Fade.Instance.ShowAfter(() =>
         {
+            SetBestIndicatorsData();
+            GUI.ShowScoreboard(true);
+            GUI.ShowTimer(true);
+
             PlayerController.Instance.ableToRaycast = false;
             PlayerController.Instance.ableToMoving = false;
 
@@ -111,7 +116,6 @@ public class ThreePointContestGame : GameMode
 
         if(isScore)
         {
-            isScore = false;
             return;
         }
 

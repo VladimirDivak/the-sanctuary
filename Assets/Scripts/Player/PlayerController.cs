@@ -20,8 +20,6 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField]
     public float netDistance;
-    [SerializeField]
-    public AccuracyValue uiAccValue;
 
     public ScoreTrigger currentScoreTrigger;
 
@@ -136,7 +134,7 @@ public class PlayerController : MonoBehaviour
 								_correctTouchPosition = new Vector2(firstTouchPosition.x, randomY);
                                 
                                 currentScoreTrigger.SetShootingMode(true);
-                                GUI.Instance.ShowCrosshair();
+                                GUI.ShowCrosshair(true);
                             }
                         }
 
@@ -156,15 +154,10 @@ public class PlayerController : MonoBehaviour
                         if(sumAccuracy != 0 && currentScoreTrigger.correctAngle)
                         {
                             roundAccuracy = Mathf.RoundToInt(sumAccuracy * 100);
-
-                            uiAccValue.gameObject.SetActive(true);
-                            uiAccValue.ShowAccuracyValue(
-                                roundAccuracy,
-                                System.MathF.Round(sumAccuracy, 1));
                         }
 
                         currentBall.PhysicEnable();
-                        GUI.Instance.HideCrosshair();
+                        GUI.ShowCrosshair(false);
                         
                         GameManager.Instance.currentGameMode?.OnBallThrow();
                         currentBall = null;

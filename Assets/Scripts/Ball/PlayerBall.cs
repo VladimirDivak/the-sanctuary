@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using UnityEngine;
+using TheSanctuary.Interfaces;
 
 public class PlayerBall : Ball {
 
@@ -15,6 +16,20 @@ public class PlayerBall : Ball {
     private float _h = 6.5f;
     private float _gravity = -18;
     private float _distanceToTrigger;
+    private IGameMode currentGameMode;
+
+    protected override void Start()
+    {
+        currentGameMode = GameManager.Instance.currentGameMode;
+
+        base.Start();
+
+        if(currentGameMode != null)
+        {
+            ableToGrabbing = currentGameMode.useBlockBallGrabbing;
+            destroyAfter = currentGameMode.useBlockBallGrabbing;
+        }
+    }
 
     public override void PhysicEnable() {
         base.PhysicEnable();
@@ -27,7 +42,7 @@ public class PlayerBall : Ball {
             Physics.gravity = Vector3.up * _gravity;
             rigidBody.velocity = GetTrowVelocity();
             
-            if (GameManager.Instance.currentGameMode != null)
+            if (currentGameMode != null)
             PlayerDataHandler.AddAvgAccuracy(PlayerController.Instance.sumAccuracy * 100);
         }
         else {
@@ -36,6 +51,11 @@ public class PlayerBall : Ball {
         }
 
         rigidBody.AddTorque(transform.right * 2, ForceMode.Impulse);
+
+        if(currentGameMode != null)
+        {
+            currentGameMode.timeToReleaseThrowing = currentGameMode.currentGameTime;
+        }
     }
 
     public override void PhysicDisable() {
@@ -45,6 +65,11 @@ public class PlayerBall : Ball {
         rigidBody.useGravity = false;
         SetThrowMode(1);
         ChangeThrowPower(.5f);
+
+        if(currentGameMode != null)
+        {
+            currentGameMode.timeToStartThrowing = currentGameMode.currentGameTime;
+        }
     }
 
     void Update() {

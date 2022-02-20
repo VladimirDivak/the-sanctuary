@@ -67,13 +67,18 @@ public class ScoreTrigger : MonoBehaviour
             if(ball.ballCorrectHigh == true)
             {
                 if(ball.hitCounter == 0) ball.AddImpulseAfterScore();
-                
-                if(GameManager.Instance.currentGameMode != null)
+
+                if(ball is PlayerBall)
                 {
-                    GameManager
-                        .Instance
-                        .currentGameMode
-                        .OnGetScore();
+                    if(GameManager.Instance.currentGameMode != null)
+                    {
+                        Debug.Log("player ball get score");
+
+                        GameManager
+                            .Instance
+                            .currentGameMode
+                            .OnGetScore();
+                    }
                 }
                 
                 ball.itsPoint = true;
