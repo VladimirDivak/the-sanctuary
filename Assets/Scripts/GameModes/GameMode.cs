@@ -34,7 +34,7 @@ public abstract class GameMode : MonoBehaviour, IGameMode
 
     public float timeToStartThrowing { get; set; }
     public float timeToReleaseThrowing { get; set; }
-    float timeBetweenStartEndReleaseThrowing => timeToReleaseThrowing - timeToStartThrowing;
+    float timeBetweenStartAndReleaseThrowing => timeToReleaseThrowing - timeToStartThrowing;
 
     public bool useBlockBallGrabbing { get; set; }
     public bool UseDestroyBallAfterThrow { get; set; }
@@ -122,7 +122,7 @@ public abstract class GameMode : MonoBehaviour, IGameMode
         }
 
         var x1 = accuracy / 100f;
-        var x2 = score - (timeBetweenStartEndReleaseThrowing * 10);
+        var x2 = score - (timeBetweenStartAndReleaseThrowing * 10);
         var x3 = scoreMultiplier;
 
         int additionalPoints = Mathf.RoundToInt(x1 * x2 * x3);
@@ -170,8 +170,6 @@ public abstract class GameMode : MonoBehaviour, IGameMode
             Debug.Log($"Новый рекорд - {currentGameScores} очков!");
             gameInformation.bestScore = currentGameScores;
         }
-
-        Debug.Log($"Время: {currentGameTime}. Очки: {currentGameScores}.");
     }
 
     protected void Reset()
